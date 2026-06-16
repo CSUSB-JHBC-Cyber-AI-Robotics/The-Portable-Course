@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The Phases of Penetration Testing — an interactive study guide. The Portable Course.">
+<title>Phases of Penetration Testing · The Portable Course</title>
+
+<!-- ============================================================================
+     THE PORTABLE COURSE  ·  TEMPLATE v1.0
+     File:  Phases of Penetration Testing — Study Guide
+     ----------------------------------------------------------------------------
+     HOW THIS FILE IS ORGANIZED (so edits stay simple):
+       1. DESIGN SYSTEM   — all colours, spacing, fonts live in :root below.
+                            Change the course's whole look by editing variables.
+       2. COMPONENTS      — reusable card / pill / accordion / tab styles.
+       3. CONTENT (body)  — plain, semantic HTML. Edit the words directly.
+       4. SCRIPT (bottom) — small vanilla-JS behaviours, one block per feature.
+                            Quiz questions + phase data are arrays you can edit.
+     No build step. No dependencies. Opens in any browser, online or offline.
+     ========================================================================= -->
+
+<style>
+/* ======================================================================
+   1. DESIGN SYSTEM  ·  edit these to restyle every course file
+   ====================================================================== */
+:root{
+  /* Brand + neutrals (light theme) */
+  --bg:        #f5f7fb;
+  --surface:   #ffffff;
+  --surface-2: #eef2f8;
+  --text:      #1b2333;
+  --muted:     #5a6678;
+  --border:    #dde3ec;
+  --shadow:    0 1px 2px rgba(20,30,55,.06), 0 8px 24px rgba(20,30,55,.06);
+
+  --primary:   #2f5bdc;   /* course accent (links + interactive) */
+  --primary-ink:#1c3aa0;
+  --primary-wash:#e9eefc;
+  --red:   #e02436;       /* red-team identity accent */
+  --green: #0c9b73;       /* terminal / console accent */
+
+  /* One colour per phase — used by diagrams, headers and the scrubber */
+  --p1:#2f6fed;  --p1-wash:#e7f0ff;   /* Reconnaissance      */
+  --p2:#0e9aa7;  --p2-wash:#e1f5f6;   /* Scanning & Enum     */
+  --p3:#e8821e;  --p3-wash:#fdeeda;   /* Gaining Access      */
+  --p4:#8a4fd6;  --p4-wash:#f1e8fc;   /* Maintaining Access  */
+  --p5:#d6457a;  --p5-wash:#fce4ee;   /* Covering / Report   */
+
+  --ok:#1f9d56;  --warn:#d98324;  --danger:#d23f54;
+
+  /* Type + rhythm */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --maxw: 980px;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --gap: 22px;
+}
+[data-theme="dark"]{
+  --bg:        #0a0e15;
+  --surface:   #0f1420;
+  --surface-2: #161e2d;
+  --text:      #cdd6e5;
+  --muted:     #74839a;
+  --border:    #1d2636;
+  --shadow:    0 0 0 1px rgba(255,62,77,.05), 0 14px 40px rgba(0,0,0,.55);
+  --primary:   #54a6ff;
+  --primary-ink:#a9cdff;
+  --primary-wash:#0e1f34;
+  --red:   #ff3e4d;
+  --green: #36d8a6;
+  --p1-wash:#0f2440; --p2-wash:#0c2a2c; --p3-wash:#33260f;
+  --p4-wash:#241836; --p5-wash:#321626;
+}
+
+/* ======================================================================
+   2. BASE + COMPONENTS
+   ====================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:17px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+h1,h2,h3,h4{line-height:1.25; font-weight:700; margin:1.6em 0 .5em}
+h2{font-size:1.7rem; scroll-margin-top:84px}
+h3{font-size:1.25rem}
+p{margin:.7em 0}
+a{color:var(--primary); text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono); font-size:.92em; background:var(--surface-2);
+     padding:.12em .4em; border-radius:6px}
+small{color:var(--muted)}
+hr{border:0; border-top:1px solid var(--border); margin:2.4em 0}
+
+/* Reading-progress bar (top of page) */
+#progress{position:fixed; top:0; left:0; height:3px; width:0;
+  background:linear-gradient(90deg,var(--p1),var(--p2),var(--p3),var(--p4),var(--p5));
+  z-index:60; transition:width .1s linear}
+
+/* Sticky top nav */
+header.topbar{position:sticky; top:0; z-index:50; background:var(--surface);
+  border-bottom:1px solid var(--border); backdrop-filter:saturate(1.2)}
+.topbar .wrap{display:flex; align-items:center; gap:18px; height:60px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; white-space:nowrap}
+.brand small{display:block; font-weight:500; font-size:.7rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); line-height:1}
+.nav{display:flex; gap:4px; margin-left:auto; overflow:auto}
+.nav a{color:var(--muted); padding:7px 11px; border-radius:8px; font-size:.86rem;
+  font-weight:600; white-space:nowrap}
+.nav a:hover{background:var(--surface-2); text-decoration:none}
+.nav a.active{color:var(--primary); background:var(--primary-wash)}
+.icon-btn{border:1px solid var(--border); background:var(--surface); color:var(--text);
+  width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.05rem;
+  display:grid; place-items:center}
+.icon-btn:hover{background:var(--surface-2)}
+
+/* Hero */
+.hero{padding:54px 0 10px; text-align:center}
+.hero .kicker{display:inline-block; background:var(--primary-wash); color:var(--primary-ink);
+  font-weight:700; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase;
+  padding:6px 13px; border-radius:999px}
+.hero h1{font-size:2.7rem; margin:.35em 0 .15em; letter-spacing:-.02em}
+.hero p.lead{font-size:1.18rem; color:var(--muted); max-width:660px; margin:.4em auto 0}
+.meta-row{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:22px}
+.chip{background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  padding:6px 14px; font-size:.85rem; font-weight:600; box-shadow:var(--shadow)}
+
+/* Generic card */
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow); margin:var(--gap) 0}
+.grid{display:grid; gap:var(--gap)}
+@media(min-width:720px){ .grid.cols-2{grid-template-columns:1fr 1fr}
+  .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
+
+/* Callout boxes */
+.note{border-left:4px solid var(--primary); background:var(--primary-wash);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 18px; margin:var(--gap) 0}
+.note.warn{border-color:var(--warn); background:var(--p3-wash)}
+.note.danger{border-color:var(--danger); background:var(--p5-wash)}
+.note.ok{border-color:var(--ok); background:#e6f6ec}
+[data-theme="dark"] .note.ok{background:#10251a}
+.note b{display:block; margin-bottom:2px}
+
+/* Command snippet with copy button */
+.snippet{position:relative; background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:14px 16px; margin:14px 0; overflow:auto}
+.snippet pre{margin:0; font-family:var(--mono); font-size:.9rem; white-space:pre}
+.copy-btn{position:absolute; top:8px; right:8px; font-size:.72rem; font-weight:700;
+  border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  border-radius:7px; padding:4px 9px; cursor:pointer}
+.copy-btn:hover{color:var(--primary); border-color:var(--primary)}
+
+/* Hover-tooltip glossary terms ( <span class="term" data-tip="..."> ) */
+.term{border-bottom:2px dotted var(--primary); cursor:help; position:relative}
+.term:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:150%;
+  transform:translateX(-50%); width:max-content; max-width:260px; background:var(--text);
+  color:var(--bg); font-size:.82rem; line-height:1.4; font-weight:500; text-align:left;
+  padding:9px 12px; border-radius:9px; box-shadow:var(--shadow); z-index:40; white-space:normal}
+.term:hover::before{content:""; position:absolute; left:50%; bottom:150%;
+  transform:translate(-50%,90%); border:6px solid transparent; border-top-color:var(--text); z-index:40}
+
+/* ---- Interactive: 5-phase stepper (hover + click) ---- */
+.stepper{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:10px 0 6px}
+@media(max-width:680px){ .stepper{grid-template-columns:1fr 1fr} }
+.step{position:relative; text-align:center; cursor:pointer; border:1px solid var(--border);
+  background:var(--surface); border-radius:var(--radius-sm); padding:16px 10px;
+  transition:transform .15s, box-shadow .15s, border-color .15s}
+.step:hover{transform:translateY(-4px); box-shadow:var(--shadow)}
+.step .num{width:34px; height:34px; margin:0 auto 8px; border-radius:50%; color:#fff;
+  font-weight:800; display:grid; place-items:center}
+.step .t{font-weight:700; font-size:.95rem}
+.step .d{font-size:.78rem; color:var(--muted); margin-top:3px}
+.step[data-phase="1"]{border-top:4px solid var(--p1)} .step[data-phase="1"] .num{background:var(--p1)}
+.step[data-phase="2"]{border-top:4px solid var(--p2)} .step[data-phase="2"] .num{background:var(--p2)}
+.step[data-phase="3"]{border-top:4px solid var(--p3)} .step[data-phase="3"] .num{background:var(--p3)}
+.step[data-phase="4"]{border-top:4px solid var(--p4)} .step[data-phase="4"] .num{background:var(--p4)}
+.step[data-phase="5"]{border-top:4px solid var(--p5)} .step[data-phase="5"] .num{background:var(--p5)}
+
+/* ---- Interactive: tabs ---- */
+.tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
+.tab{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  padding:8px 15px; border-radius:999px; font-weight:700; font-size:.88rem; cursor:pointer}
+.tab.active{background:var(--primary); color:#fff; border-color:var(--primary)}
+.tabpanel{display:none} .tabpanel.active{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(4px)}to{opacity:1}}
+
+/* ---- Interactive: accordion (click to slide open) ---- */
+.acc{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin:12px 0}
+.acc-head{width:100%; text-align:left; background:var(--surface); border:0; cursor:pointer;
+  padding:15px 18px; font-weight:700; font-size:1rem; color:var(--text);
+  display:flex; align-items:center; gap:12px}
+.acc-head:hover{background:var(--surface-2)}
+.acc-head .caret{margin-left:auto; transition:transform .25s; color:var(--muted)}
+.acc.open .acc-head .caret{transform:rotate(90deg)}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .3s ease}
+.acc-body .inner{padding:4px 18px 18px}
+
+/* ---- Interactive: phase scrubber (slide) ---- */
+.scrub-stage{text-align:center}
+.scrub input[type=range]{width:100%; accent-color:var(--primary); height:6px; margin:8px 0 4px}
+.scrub-ticks{display:flex; justify-content:space-between; font-size:.74rem; color:var(--muted);
+  font-weight:700; padding:0 2px}
+.scrub-panel{margin-top:16px; border-radius:var(--radius); padding:22px; border:1px solid var(--border);
+  text-align:left; transition:background .3s}
+.scrub-panel .badge{display:inline-block; color:#fff; font-weight:800; font-size:.78rem;
+  padding:4px 12px; border-radius:999px; letter-spacing:.04em}
+.scrub-panel h3{margin:.5em 0 .2em}
+
+/* ---- Interactive: quiz ---- */
+.quiz-q{font-weight:700; margin:0 0 12px}
+.quiz-opts{display:grid; gap:9px}
+.quiz-opt{text-align:left; border:1px solid var(--border); background:var(--surface);
+  border-radius:var(--radius-sm); padding:12px 15px; cursor:pointer; font:inherit; color:var(--text)}
+.quiz-opt:hover{border-color:var(--primary)}
+.quiz-opt.correct{border-color:var(--ok); background:#e6f6ec}
+.quiz-opt.wrong{border-color:var(--danger); background:var(--p5-wash)}
+[data-theme="dark"] .quiz-opt.correct{background:#10251a}
+.quiz-foot{display:flex; align-items:center; gap:14px; margin-top:16px}
+.quiz-foot button{border:0; background:var(--primary); color:#fff; font-weight:700;
+  padding:10px 18px; border-radius:9px; cursor:pointer}
+.quiz-foot button:disabled{opacity:.4; cursor:not-allowed}
+.quiz-explain{margin-top:12px; font-size:.92rem; color:var(--muted); display:none}
+.quiz-explain.show{display:block}
+
+/* Tables */
+table{width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--surface-2); font-weight:700}
+
+/* Resource list with editable link fields */
+.res{display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline;
+  padding:12px 0; border-bottom:1px solid var(--border)}
+.res b{flex:1 1 240px}
+.res .fill{color:var(--warn); font-weight:700; font-family:var(--mono); font-size:.85rem}
+
+/* Footer */
+footer{margin:60px 0 40px; color:var(--muted); font-size:.9rem; text-align:center}
+
+/* Section anchor offset helper */
+section{padding-top:8px}
+.section-tag{font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--primary)}
+
+/* ======================================================================
+   TERMINAL / RED-TEAM THEME LAYER  ·  shared flourishes (all CSS, no deps)
+   Re-tint the whole course by editing --red / --green in the palette above.
+   ====================================================================== */
+body{
+  background-image:
+    linear-gradient(rgba(120,140,170,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,140,170,.05) 1px, transparent 1px);
+  background-size:42px 42px;
+}
+.brand{font-family:var(--mono)}
+.brand svg{filter:drop-shadow(0 0 5px rgba(255,62,77,.55))}
+.brand small{color:var(--red)}
+.nav a{font-family:var(--mono); font-size:.8rem; letter-spacing:-.01em}
+.section-tag{font-family:var(--mono); color:var(--red)}
+.section-tag::before{content:"// "; color:var(--green)}
+h2{font-family:var(--mono); letter-spacing:-.01em}
+h2::before{content:"$ "; color:var(--green)}
+.hero .kicker{font-family:var(--mono); background:transparent; border:1px solid var(--border); color:var(--green)}
+.hero .kicker::before{content:"~$ "; color:var(--muted)}
+.hero h1{font-family:var(--mono); font-size:2.25rem; line-height:1.15; letter-spacing:-.02em}
+.hero h1::after{content:"\2587"; color:var(--green); margin-left:5px; animation:cursor 1.1s steps(1) infinite}
+@keyframes cursor{50%{opacity:0}}
+.chip{font-family:var(--mono); font-size:.8rem}
+.copy-btn{font-family:var(--mono)}
+.snippet{border-left:3px solid var(--green)}
+#progress{background:linear-gradient(90deg, var(--red), var(--green))}
+.tab.active{box-shadow:0 0 16px -3px var(--primary)}
+.card{position:relative}
+.card::before{content:""; position:absolute; left:-1px; right:-1px; top:-1px; height:2px;
+  background:linear-gradient(90deg, var(--red), transparent 55%);
+  border-radius:var(--radius) var(--radius) 0 0}
+
+/* extra console flourishes — scanlines, hover glow, hero command prompt */
+body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55;
+  background:repeating-linear-gradient(0deg, rgba(127,150,180,.05) 0 1px, transparent 1px 3px)}
+.topbar{box-shadow:0 1px 0 rgba(255,62,77,.18)}
+.tab:hover, .acc-head:hover, .step:hover{box-shadow:0 0 20px -7px var(--green)}
+.icon-btn:hover{border-color:var(--red); box-shadow:0 0 16px -5px var(--red)}
+.card:hover{box-shadow:0 0 0 1px rgba(255,62,77,.30), var(--shadow)}
+.hero h1::after{content:""; animation:none; margin:0}
+.cmdline{font-family:var(--mono); color:var(--muted); font-size:.9rem; margin:16px 0 0; word-break:break-word}
+.cmdline b{color:var(--green); font-weight:600}
+.cmdline i{color:var(--red); font-style:normal}
+.cmdline::after{content:" \2587"; color:var(--green); animation:cursor 1.1s steps(1) infinite}
+</style>
+</head>
+
+<body>
+<div id="progress"></div>
+
+<!-- ============================================================
+     TOP NAV
+     ============================================================ -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <!-- Portable Course mark: a little USB/drive glyph -->
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="7" y="2.5" width="10" height="15" rx="2.2" fill="var(--primary)"/>
+        <rect x="9.4" y="5" width="5.2" height="2" rx="1" fill="#fff"/>
+        <rect x="10" y="17.5" width="4" height="4" rx="1" fill="var(--primary-ink)"/>
+      </svg>
+      <span>Portable Course<small>Pen-Testing Phases</small></span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#start">Start</a>
+      <a href="#lifecycle">Lifecycle</a>
+      <a href="#map">Frameworks</a>
+      <a href="#phases">5 Phases</a>
+      <a href="#toolkit">Toolkit</a>
+      <a href="#scrubber">Scrubber</a>
+      <a href="#ethics">Ethics</a>
+      <a href="#quiz">Quiz</a>
+      <a href="#resources">Resources</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<div class="wrap">
+  <div class="hero" id="start">
+    <span class="kicker">The Portable Course · Module 01</span>
+    <h1>The Phases of Penetration Testing</h1>
+    <p class="lead">A visual, hands-on walkthrough of how a professional security
+      assessment actually flows — from first permission to final report.</p>
+    <p class="cmdline"><b>root@portable-course</b>:<i>~/module-01</i>$ ./penetration-testing --phases --interactive</p>
+    <div class="meta-row">
+      <span class="chip">⏱ ~25 min read</span>
+      <span class="chip">🎯 Spine: EC-Council 5 phases</span>
+      <span class="chip">🔁 Cross-mapped: PTES · NIST 800-115</span>
+      <span class="chip">🧪 Authorized / lab use only</span>
+    </div>
+  </div>
+
+  <!-- AUTHORIZATION FIRST — this framing sets the tone for the whole course -->
+  <div class="note danger">
+    <b>⚖ Read this before anything else — authorization is the line.</b>
+    Every technique here is taught for <em>authorized</em> testing: your own lab, a CTF,
+    or an engagement with <strong>written permission that defines the scope</strong>.
+    Running these tools against systems you don't own or aren't contracted to test is a
+    crime in most countries (in the U.S., the
+    <a href="https://www.justice.gov/jm/jm-9-48000-computer-fraud" target="_blank" rel="noopener">Computer Fraud and Abuse Act</a>).
+    Skill without authorization isn't pentesting — it's an offense. Jump to
+    <a href="#ethics">Rules of Engagement &amp; Ethics</a> for how the pros stay on the right side.
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION: ORIENTATION
+     ============================================================ -->
+<div class="wrap">
+<section id="orientation">
+  <span class="section-tag">Orientation</span>
+  <h2>What a penetration test really is</h2>
+  <p>A <span class="term" data-tip="An authorized, simulated attack on a system to find and demonstrate exploitable weaknesses before a real attacker does.">penetration test</span>
+     is an <strong>authorized, simulated attack</strong> on a system, network, or
+     application. The goal isn't to "break in" for its own sake — it's to find the
+     weaknesses a real attacker would use, <em>prove</em> they're exploitable, and hand
+     the owner a clear path to fix them.</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h3>🔍 Vulnerability scan ≠ pentest</h3>
+      <p>A scan <em>lists</em> possible weaknesses automatically. A pentest <em>verifies</em>
+         them by hand and shows real business impact. Scanning is one phase inside a pentest.</p>
+    </div>
+    <div class="card">
+      <h3>🧭 It follows a lifecycle</h3>
+      <p>Real tests are methodical, not random. The same ordered phases repeat every
+         engagement — that repeatability is what makes results trustworthy.</p>
+    </div>
+    <div class="card">
+      <h3>📝 The report is the product</h3>
+      <p>The client pays for findings they can act on. Clean evidence, severity, and
+         remediation steps matter more than the flashiest exploit.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: LIFECYCLE AT A GLANCE  (interactive stepper + SVG cycle)
+     ============================================================ -->
+<div class="wrap">
+<section id="lifecycle">
+  <span class="section-tag">The big picture</span>
+  <h2>The lifecycle at a glance</h2>
+  <p>Hover any phase to preview it; click to jump straight to its deep-dive below.</p>
+
+  <!-- Interactive stepper: hover lifts, click scrolls (wired in script) -->
+  <div class="stepper" id="stepper">
+    <div class="step" data-phase="1" data-go="#phase-1">
+      <div class="num">1</div><div class="t">Reconnaissance</div>
+      <div class="d">Gather intel</div>
+    </div>
+    <div class="step" data-phase="2" data-go="#phase-2">
+      <div class="num">2</div><div class="t">Scanning &amp; Enumeration</div>
+      <div class="d">Map the attack surface</div>
+    </div>
+    <div class="step" data-phase="3" data-go="#phase-3">
+      <div class="num">3</div><div class="t">Gaining Access</div>
+      <div class="d">Exploit a weakness</div>
+    </div>
+    <div class="step" data-phase="4" data-go="#phase-4">
+      <div class="num">4</div><div class="t">Maintaining Access</div>
+      <div class="d">Persist &amp; pivot</div>
+    </div>
+    <div class="step" data-phase="5" data-go="#phase-5">
+      <div class="num">5</div><div class="t">Covering Tracks &amp; Reporting</div>
+      <div class="d">Clean up &amp; document</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Why it loops.</b> The arrow back to the start isn't decoration. What you learn while
+    gaining access (Phase 3) often feeds <em>new</em> reconnaissance (Phase 1) on the next
+    machine — pivoting deeper into a network. Pentesting is a cycle, not a straight line.
+  </div>
+
+  <!-- Decorative-but-informative SVG: the iterative loop -->
+  <div class="card" style="text-align:center">
+    <svg viewBox="0 0 640 240" width="100%" style="max-width:640px" role="img"
+         aria-label="Circular diagram showing the five phases looping back to reconnaissance">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <!-- dotted orbit -->
+      <ellipse cx="320" cy="120" rx="280" ry="92" fill="none"
+               stroke="var(--border)" stroke-width="2" stroke-dasharray="3 7"/>
+      <!-- nodes -->
+      <g font-family="var(--font)" font-size="13" font-weight="700" text-anchor="middle">
+        <g><circle cx="60"  cy="120" r="30" fill="var(--p1)"/><text x="60"  y="125" fill="#fff">1</text>
+           <text x="60"  y="178" fill="var(--text)">Recon</text></g>
+        <g><circle cx="190" cy="44"  r="30" fill="var(--p2)"/><text x="190" y="49"  fill="#fff">2</text>
+           <text x="190" y="22"  fill="var(--text)">Scan</text></g>
+        <g><circle cx="320" cy="34"  r="30" fill="var(--p3)"/><text x="320" y="39"  fill="#fff">3</text>
+           <text x="320" y="12"  fill="var(--text)">Access</text></g>
+        <g><circle cx="450" cy="44"  r="30" fill="var(--p4)"/><text x="450" y="49"  fill="#fff">4</text>
+           <text x="450" y="22"  fill="var(--text)">Maintain</text></g>
+        <g><circle cx="580" cy="120" r="30" fill="var(--p5)"/><text x="580" y="125" fill="#fff">5</text>
+           <text x="580" y="178" fill="var(--text)">Report</text></g>
+      </g>
+      <!-- loop-back arrow -->
+      <path d="M560,170 C440,250 200,250 80,170" fill="none" stroke="var(--muted)"
+            stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+      <text x="320" y="232" text-anchor="middle" font-size="12" fill="var(--muted)"
+            font-family="var(--font)">findings feed the next round of recon → pivot deeper</text>
+    </svg>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: FRAMEWORK CROSS-MAP  (interactive tabs)
+     ============================================================ -->
+<div class="wrap">
+<section id="map">
+  <span class="section-tag">Know the standards</span>
+  <h2>Same idea, three frameworks</h2>
+  <p>The 5-phase model is the teaching spine, but you'll meet others on the job. They
+     describe the <em>same work</em> at different resolutions. Click a framework to see how
+     its stages line up.</p>
+
+  <div class="card">
+    <div class="tabs" data-tabs="fw">
+      <button class="tab active" data-tab="ceh">EC-Council · 5 phases</button>
+      <button class="tab" data-tab="ptes">PTES · 7 phases</button>
+      <button class="tab" data-tab="nist">NIST SP 800-115 · 4 phases</button>
+    </div>
+
+    <div class="tabpanel active" data-panel="ceh">
+      <p>The classic certification/teaching model — the spine of this guide.</p>
+      <table>
+        <tr><th>#</th><th>Phase</th><th>One-liner</th></tr>
+        <tr><td>1</td><td>Reconnaissance</td><td>Collect information on the target.</td></tr>
+        <tr><td>2</td><td>Scanning &amp; Enumeration</td><td>Find live hosts, ports, services, accounts.</td></tr>
+        <tr><td>3</td><td>Gaining Access</td><td>Exploit a weakness to get a foothold.</td></tr>
+        <tr><td>4</td><td>Maintaining Access</td><td>Keep the foothold; escalate and pivot.</td></tr>
+        <tr><td>5</td><td>Covering Tracks</td><td>(In authorized tests → clean up &amp; report.)</td></tr>
+      </table>
+    </div>
+
+    <div class="tabpanel" data-panel="ptes">
+      <p>The <a href="http://www.pentest-standard.org/" target="_blank" rel="noopener">Penetration Testing Execution Standard</a>
+         — the most engagement-realistic. Note it adds the business bookends the 5-phase model implies.</p>
+      <table>
+        <tr><th>#</th><th>PTES stage</th><th>Maps to 5-phase</th></tr>
+        <tr><td>1</td><td>Pre-engagement Interactions</td><td>(scoping — before Phase 1)</td></tr>
+        <tr><td>2</td><td>Intelligence Gathering</td><td>Phase 1 · Recon</td></tr>
+        <tr><td>3</td><td>Threat Modeling</td><td>Phase 1–2 · plan the attack</td></tr>
+        <tr><td>4</td><td>Vulnerability Analysis</td><td>Phase 2 · Scanning</td></tr>
+        <tr><td>5</td><td>Exploitation</td><td>Phase 3 · Gaining Access</td></tr>
+        <tr><td>6</td><td>Post-Exploitation</td><td>Phase 4 · Maintaining Access</td></tr>
+        <tr><td>7</td><td>Reporting</td><td>Phase 5 · Reporting</td></tr>
+      </table>
+    </div>
+
+    <div class="tabpanel" data-panel="nist">
+      <p><a href="https://csrc.nist.gov/pubs/sp/800/115/final" target="_blank" rel="noopener">NIST SP 800-115</a>
+         — the compact, compliance-friendly model used by many U.S. orgs.</p>
+      <table>
+        <tr><th>#</th><th>NIST phase</th><th>Maps to 5-phase</th></tr>
+        <tr><td>1</td><td>Planning</td><td>(scoping — before Phase 1)</td></tr>
+        <tr><td>2</td><td>Discovery</td><td>Phase 1–2 · Recon + Scanning</td></tr>
+        <tr><td>3</td><td>Attack</td><td>Phase 3–4 · Access + Maintain</td></tr>
+        <tr><td>4</td><td>Reporting</td><td>Phase 5 · Reporting</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: THE FIVE PHASES (deep dives)
+     Each phase = heading + "inputs/activities/outputs" + accordion + tools
+     ============================================================ -->
+<div class="wrap">
+<section id="phases">
+  <span class="section-tag">The core</span>
+  <h2>The five phases, in depth</h2>
+  <p>Each phase below follows the same shape so it's easy to study and easy to edit:
+     <strong>what goes in</strong>, <strong>what you do</strong>, <strong>what comes out</strong>,
+     plus a click-to-open deep dive and the go-to tools.</p>
+
+  <!-- ----- PHASE 1 ----- -->
+  <h3 id="phase-1" style="color:var(--p1)">① Reconnaissance — gather intelligence</h3>
+  <p>Learn everything you can about the target <em>before</em> touching it. Good recon makes
+     every later phase faster and quieter.</p>
+  <div class="grid cols-3">
+    <div class="card"><b>In →</b><p>Scope &amp; targets from the rules of engagement.</p></div>
+    <div class="card"><b>Do</b><p>OSINT, DNS/WHOIS, employee &amp; tech footprinting.</p></div>
+    <div class="card"><b>Out →</b><p>A profile: domains, IP ranges, people, tech stack.</p></div>
+  </div>
+  <p><strong>Passive vs. active</strong> is the key distinction here:</p>
+  <div class="grid cols-2">
+    <div class="note ok"><b>Passive recon</b>No packets to the target. Public records, search
+      engines, social media, certificate transparency. Effectively undetectable.</div>
+    <div class="note warn"><b>Active recon</b>You interact with the target (e.g. DNS lookups
+      against their server, light probing). Faster, richer — but it can be logged.</div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Deep dive: what you're actually collecting <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <ul>
+        <li><strong>Network footprint</strong> — domains, subdomains, IP ranges, ASN.</li>
+        <li><strong>Technology stack</strong> — web servers, frameworks, CMS, cloud providers.</li>
+        <li><strong>Human layer</strong> — employees, emails, job posts (which leak the tech they run).</li>
+        <li><strong>Leaked data</strong> — credentials in breaches, secrets in public code repos.</li>
+      </ul>
+      <p><span class="term" data-tip="Open-Source Intelligence: information gathered from publicly available sources.">OSINT</span>
+         is the heart of this phase. The
+         <a href="https://osintframework.com/" target="_blank" rel="noopener">OSINT Framework</a>
+         is a great map of where to look.</p>
+    </div></div>
+  </div>
+  <p><small><strong>Tools:</strong></small>
+     <code>whois</code> · <code>dig</code> / <code>nslookup</code> ·
+     <a href="https://github.com/laramies/theHarvester" target="_blank" rel="noopener">theHarvester</a> ·
+     <a href="https://www.maltego.com/" target="_blank" rel="noopener">Maltego</a> ·
+     <a href="https://www.shodan.io/" target="_blank" rel="noopener">Shodan</a> ·
+     <a href="https://crt.sh/" target="_blank" rel="noopener">crt.sh</a></p>
+
+  <hr>
+
+  <!-- ----- PHASE 2 ----- -->
+  <h3 id="phase-2" style="color:var(--p2)">② Scanning &amp; Enumeration — map the attack surface</h3>
+  <p>Turn the recon profile into a precise map: which hosts are alive, which ports are open,
+     which services and versions are running, and what accounts or shares exist.</p>
+  <div class="grid cols-3">
+    <div class="card"><b>In →</b><p>Target ranges and domains from Phase 1.</p></div>
+    <div class="card"><b>Do</b><p>Host discovery, port + service scanning, vuln scanning, enumeration.</p></div>
+    <div class="card"><b>Out →</b><p>A live map of services, versions &amp; likely weak points.</p></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Deep dive: scanning vs. enumeration <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><strong>Scanning</strong> answers "what's there?" — live hosts, open ports, service
+         versions. <strong>Enumeration</strong> goes deeper and pulls <em>named</em> resources:
+         user accounts, network shares, SNMP data, directory structures. Enumeration is where
+         a generic "port 445 is open" becomes "here are the usernames and shares."</p>
+      <p>Map findings to known CVEs — <a href="https://nvd.nist.gov/" target="_blank" rel="noopener">NVD</a>
+         and <a href="https://attack.mitre.org/" target="_blank" rel="noopener">MITRE ATT&amp;CK</a>
+         help connect a version to a technique.</p>
+    </div></div>
+  </div>
+  <div class="snippet"><button class="copy-btn">Copy</button><pre>
+# Classic two-step: discover, then scan deeply
+nmap -sn 10.0.0.0/24                 # ping sweep — who is alive?
+nmap -sV -sC -p- -oA scan 10.0.0.5   # all ports, versions, default scripts</pre></div>
+  <p><small><strong>Tools:</strong></small>
+     <a href="https://nmap.org/" target="_blank" rel="noopener">Nmap</a> ·
+     <a href="https://www.openvas.org/" target="_blank" rel="noopener">OpenVAS</a> ·
+     <a href="https://www.tenable.com/products/nessus" target="_blank" rel="noopener">Nessus</a> ·
+     <a href="https://github.com/RustScan/RustScan" target="_blank" rel="noopener">RustScan</a> ·
+     <code>enum4linux-ng</code></p>
+
+  <hr>
+
+  <!-- ----- PHASE 3 ----- -->
+  <h3 id="phase-3" style="color:var(--p3)">③ Gaining Access — exploit a weakness</h3>
+  <p>The phase everyone pictures. Use a vulnerability from Phase 2 to get a foothold — a shell,
+     a session, valid credentials, or application-level control.</p>
+  <div class="grid cols-3">
+    <div class="card"><b>In →</b><p>Prioritized weaknesses + working exploit path.</p></div>
+    <div class="card"><b>Do</b><p>Exploit, brute-force, phish, abuse misconfigurations.</p></div>
+    <div class="card"><b>Out →</b><p>Initial foothold + proof of access (evidence).</p></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Deep dive: common access vectors <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <ul>
+        <li><strong>Software exploits</strong> — known CVEs against unpatched services/apps.</li>
+        <li><strong>Web app flaws</strong> — injection, broken auth, SSRF (see the
+            <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">OWASP Top 10</a>).</li>
+        <li><strong>Credential attacks</strong> — password spraying, reused/leaked creds.</li>
+        <li><strong>Social engineering</strong> — phishing the human layer.</li>
+        <li><strong>Misconfigurations</strong> — default creds, exposed admin panels, open buckets.</li>
+      </ul>
+      <div class="note warn"><b>Stay in scope.</b> A working exploit is only valid if the target
+        is in the authorized scope. "It was reachable" is never the same as "it was allowed."</div>
+    </div></div>
+  </div>
+  <p><small><strong>Tools:</strong></small>
+     <a href="https://www.metasploit.com/" target="_blank" rel="noopener">Metasploit</a> ·
+     <a href="https://portswigger.net/burp" target="_blank" rel="noopener">Burp Suite</a> ·
+     <a href="https://github.com/sqlmapproject/sqlmap" target="_blank" rel="noopener">sqlmap</a> ·
+     <a href="https://hashcat.net/hashcat/" target="_blank" rel="noopener">Hashcat</a> ·
+     <a href="https://www.exploit-db.com/" target="_blank" rel="noopener">Exploit-DB</a></p>
+
+  <hr>
+
+  <!-- ----- PHASE 4 ----- -->
+  <h3 id="phase-4" style="color:var(--p4)">④ Maintaining Access — persist, escalate, pivot</h3>
+  <p>Prove the impact. A foothold as a low-privilege user is a finding; <em>domain admin</em>
+     reached from that foothold is the story the report needs to tell.</p>
+  <div class="grid cols-3">
+    <div class="card"><b>In →</b><p>Initial foothold from Phase 3.</p></div>
+    <div class="card"><b>Do</b><p>Privilege escalation, persistence, lateral movement, data discovery.</p></div>
+    <div class="card"><b>Out →</b><p>Demonstrated business impact + scope of compromise.</p></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Deep dive: the post-exploitation goals <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <ul>
+        <li><strong>Privilege escalation</strong> — low-priv → admin/root/SYSTEM.</li>
+        <li><strong>Persistence</strong> — a reliable way back in (documented, then removed at the end).</li>
+        <li><strong>Lateral movement</strong> — pivot from one host to others; this feeds new recon.</li>
+        <li><strong>Goal demonstration</strong> — reach the "crown jewels" the scope defined
+            (e.g. a database, domain controller, or sensitive file) — <em>access, don't exfiltrate</em>.</li>
+      </ul>
+      <div class="note"><b>Ethical persistence.</b> In an authorized test you note exactly what
+        you planted and where, so every change is cleanly reversed during Phase 5.</div>
+    </div></div>
+  </div>
+  <p><small><strong>Tools:</strong></small>
+     <a href="https://github.com/carlospolop/PEASS-ng" target="_blank" rel="noopener">PEASS-ng (linPEAS/winPEAS)</a> ·
+     <a href="https://github.com/BloodHoundAD/BloodHound" target="_blank" rel="noopener">BloodHound</a> ·
+     <code>Mimikatz</code> (credential study) ·
+     C2 frameworks (concept only)</p>
+
+  <hr>
+
+  <!-- ----- PHASE 5 ----- -->
+  <h3 id="phase-5" style="color:var(--p5)">⑤ Covering Tracks &amp; Reporting — clean up and deliver value</h3>
+  <p>The phase that separates a criminal from a professional. A real attacker hides; a pentester
+     <strong>documents everything and restores the environment</strong>.</p>
+  <div class="grid cols-3">
+    <div class="card"><b>In →</b><p>All evidence, notes &amp; changes from Phases 1–4.</p></div>
+    <div class="card"><b>Do</b><p>Remove artifacts, restore state, write the report, debrief.</p></div>
+    <div class="card"><b>Out →</b><p>A clear, prioritized report + a clean environment.</p></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Deep dive: two faces of Phase 5 <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><strong>"Covering tracks" — the attacker's view (study, don't imitate).</strong>
+         Real adversaries clear logs, hide files, and time-stomp to evade detection. You learn
+         this so the <span class="term" data-tip="The defensive security team that monitors for and responds to attacks.">blue team</span> can detect it — not to hide your own work.</p>
+      <p><strong>Cleanup &amp; reporting — the pentester's job.</strong> You <em>reverse</em> your
+         changes (remove tools, accounts, persistence) and produce the deliverable:</p>
+      <ul>
+        <li><strong>Executive summary</strong> — business risk, in plain language.</li>
+        <li><strong>Technical findings</strong> — each issue with evidence, severity (e.g.
+            <a href="https://www.first.org/cvss/" target="_blank" rel="noopener">CVSS</a>), and reproduction steps.</li>
+        <li><strong>Remediation</strong> — concrete, prioritized fixes.</li>
+        <li><strong>Debrief</strong> — walk the client through it.</li>
+      </ul>
+      <div class="note ok"><b>The report is the product.</b> An engagement no one can act on was a
+        waste of everyone's time, no matter how clever the exploit.</div>
+    </div></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: TOOLS & TECHNIQUES BY PHASE  (interactive tabs)
+     Each tab = one phase. Edit a row to add/replace a tool or technique.
+     ============================================================ -->
+<div class="wrap">
+<section id="toolkit">
+  <span class="section-tag">The arsenal · click</span>
+  <h2>Common tools &amp; techniques by phase</h2>
+  <p>Same tools show up again and again — but <em>why</em> they fit a phase is what matters
+     for the exam and the job. Click a phase to see its go-to tools and techniques, and the
+     reason each earns its place.</p>
+
+  <div class="card">
+    <div class="tabs" data-tabs="tools">
+      <button class="tab active" data-tab="t1"><span style="color:var(--p1)">●</span> 1 · Recon</button>
+      <button class="tab" data-tab="t2"><span style="color:var(--p2)">●</span> 2 · Scanning</button>
+      <button class="tab" data-tab="t3"><span style="color:var(--p3)">●</span> 3 · Access</button>
+      <button class="tab" data-tab="t4"><span style="color:var(--p4)">●</span> 4 · Maintain</button>
+      <button class="tab" data-tab="t5"><span style="color:var(--p5)">●</span> 5 · Report</button>
+    </div>
+
+    <!-- PHASE 1 -->
+    <div class="tabpanel active" data-panel="t1">
+      <table>
+        <tr><th>Tool / Technique</th><th>What it is</th><th>Why it's relevant here</th></tr>
+        <tr><td><b>WHOIS · dig · nslookup</b></td><td>DNS &amp; registration lookups (footprinting).</td>
+          <td>Reveal domains, IP ranges, name servers and registrant info <em>without touching</em> the target — pure passive mapping.</td></tr>
+        <tr><td><b>theHarvester</b></td><td>OSINT harvester for emails, subdomains, hosts.</td>
+          <td>Aggregates the human + network layer from public sources, seeding both phishing and scanning targets.</td></tr>
+        <tr><td><b>Shodan · Censys</b></td><td>Search engines for internet-exposed devices.</td>
+          <td>Find the org's exposed services and banners that others already indexed — intel with zero packets from you.</td></tr>
+        <tr><td><b>crt.sh / Certificate Transparency</b></td><td>Public TLS-certificate logs.</td>
+          <td>Leak subdomains that DNS brute-forcing misses, widening the in-scope attack surface.</td></tr>
+        <tr><td><b>Google dorking</b></td><td>Advanced search operators.</td>
+          <td>Surface exposed files, login portals and leaked data that's publicly indexed — cheap, quiet wins.</td></tr>
+        <tr><td><b>Maltego</b></td><td>Link-analysis / OSINT graphing.</td>
+          <td>Visualizes relationships between people, domains and infrastructure to plan realistic attack paths.</td></tr>
+      </table>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="tabpanel" data-panel="t2">
+      <table>
+        <tr><th>Tool / Technique</th><th>What it is</th><th>Why it's relevant here</th></tr>
+        <tr><td><b>Nmap (+ NSE)</b></td><td>Port, service and version scanning with a scripting engine.</td>
+          <td>The backbone of the phase — turns IP ranges into a precise map of live hosts, open ports and service versions.</td></tr>
+        <tr><td><b>RustScan · Masscan</b></td><td>Very fast, large-scale port discovery.</td>
+          <td>Quickly narrow huge ranges so deep Nmap scans only run where something's actually listening.</td></tr>
+        <tr><td><b>Nessus · OpenVAS</b></td><td>Automated vulnerability scanners.</td>
+          <td>Correlate discovered versions to known CVEs, giving a prioritized list of what's worth exploiting next.</td></tr>
+        <tr><td><b>enum4linux-ng · smbclient</b></td><td>SMB / Windows enumeration.</td>
+          <td>Pull <em>named</em> resources — users, shares, password policy — turning "port 445 open" into actionable detail.</td></tr>
+        <tr><td><b>Gobuster · ffuf</b></td><td>Directory / content brute-forcing for web apps.</td>
+          <td>Enumerate hidden paths, endpoints and virtual hosts that expand a web app's attack surface.</td></tr>
+        <tr><td><b>Banner grabbing (netcat)</b></td><td>Reading a service's identifying banner.</td>
+          <td>Confirms exact software/version so you can match the right exploit in Phase 3.</td></tr>
+      </table>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="tabpanel" data-panel="t3">
+      <table>
+        <tr><th>Tool / Technique</th><th>What it is</th><th>Why it's relevant here</th></tr>
+        <tr><td><b>Metasploit</b></td><td>Exploitation framework with payloads.</td>
+          <td>Standardized, reliable exploits convert a known vulnerability into an actual session/foothold.</td></tr>
+        <tr><td><b>Burp Suite</b></td><td>Intercepting web proxy.</td>
+          <td>Manipulate live requests to find and exploit web flaws — injection, broken auth, access-control bypass.</td></tr>
+        <tr><td><b>sqlmap</b></td><td>Automated SQL-injection tool.</td>
+          <td>Detects and exploits SQLi to read databases or gain access where input isn't validated.</td></tr>
+        <tr><td><b>Hydra · Medusa</b></td><td>Online credential brute-force / password spraying.</td>
+          <td>Tests weak and reused passwords against live services — often the simplest way in.</td></tr>
+        <tr><td><b>Hashcat · John the Ripper</b></td><td>Offline password cracking.</td>
+          <td>Turn captured hashes into plaintext credentials that unlock further access.</td></tr>
+        <tr><td><b>Phishing (GoPhish · SET)</b></td><td>Social-engineering campaigns.</td>
+          <td>Exploit the human layer — frequently the highest-success vector against a hardened network.</td></tr>
+      </table>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="tabpanel" data-panel="t4">
+      <table>
+        <tr><th>Tool / Technique</th><th>What it is</th><th>Why it's relevant here</th></tr>
+        <tr><td><b>linPEAS · winPEAS</b></td><td>Privilege-escalation enumeration scripts.</td>
+          <td>Surface misconfigurations and privesc paths from a low-priv foothold — the route to admin/root.</td></tr>
+        <tr><td><b>BloodHound · SharpHound</b></td><td>Active Directory attack-path mapping.</td>
+          <td>Graphs the shortest path to Domain Admin via ACLs and sessions — turns a foothold into full compromise.</td></tr>
+        <tr><td><b>Mimikatz</b> (concept)</td><td>In-memory credential / ticket extraction.</td>
+          <td>Harvested creds enable lateral movement; studied conceptually so defenders can detect it.</td></tr>
+        <tr><td><b>PsExec · WMI · WinRM</b></td><td>Legitimate remote-admin protocols.</td>
+          <td>Used for lateral movement — pivoting host to host while blending in with normal admin traffic.</td></tr>
+        <tr><td><b>Meterpreter / C2</b> (concept)</td><td>Post-exploitation session &amp; control channel.</td>
+          <td>Stable channel to manage access; in a test it's documented and torn down during Phase 5.</td></tr>
+        <tr><td><b>Scheduled tasks · cron · services</b></td><td>Persistence mechanisms.</td>
+          <td>A documented "way back in" demonstrates durability of compromise — then removed during cleanup.</td></tr>
+      </table>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="tabpanel" data-panel="t5">
+      <table>
+        <tr><th>Tool / Technique</th><th>What it is</th><th>Why it's relevant here</th></tr>
+        <tr><td><b>Cleanup scripts &amp; change logs</b></td><td>A record of every change you made.</td>
+          <td>Lets you reverse tools, accounts and persistence so the environment is restored exactly as found.</td></tr>
+        <tr><td><b>Dradis · Faraday · PlexTrac</b></td><td>Reporting &amp; collaboration platforms.</td>
+          <td>Centralize evidence and generate consistent, client-ready reports — the actual deliverable.</td></tr>
+        <tr><td><b>CVSS calculator</b></td><td>Standard severity-scoring system.</td>
+          <td>Gives each finding a defensible severity so the client can prioritize remediation.</td></tr>
+        <tr><td><b>Evidence capture (Greenshot · asciinema)</b></td><td>Screenshots &amp; terminal recordings.</td>
+          <td>Provides reproducible proof for every finding — credibility the report depends on.</td></tr>
+        <tr><td><b>MITRE ATT&amp;CK mapping</b></td><td>Tagging findings to known techniques.</td>
+          <td>Ties your actions to detections the blue team can build — turning the test into lasting defense.</td></tr>
+        <tr><td><b>Log clearing / timestomping</b> (study only)</td><td>Attacker anti-forensics.</td>
+          <td>Learned so defenders can <em>spot</em> it — never used to hide authorized testing work.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>One tool, many phases.</b> Nmap, Burp and Metasploit all reappear across phases — what
+    changes is your <em>intent</em>. Knowing <em>why</em> a tool fits a phase matters more than
+    memorizing commands.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: INTERACTIVE SCRUBBER  (slide)
+     ============================================================ -->
+<div class="wrap">
+<section id="scrubber">
+  <span class="section-tag">Try it · slide</span>
+  <h2>Scrub through an engagement</h2>
+  <p>Drag the slider to move through the five phases and watch the focus change.</p>
+  <div class="card scrub">
+    <div class="scrub-stage">
+      <input type="range" id="scrub" min="1" max="5" value="1" step="1"
+             aria-label="Engagement phase scrubber">
+      <div class="scrub-ticks">
+        <span>Recon</span><span>Scan</span><span>Access</span><span>Maintain</span><span>Report</span>
+      </div>
+    </div>
+    <!-- Populated by script from the PHASES array -->
+    <div class="scrub-panel" id="scrubPanel"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: ETHICS / RULES OF ENGAGEMENT
+     ============================================================ -->
+<div class="wrap">
+<section id="ethics">
+  <span class="section-tag">Non-negotiable</span>
+  <h2>Rules of engagement &amp; ethics</h2>
+  <p>Before Phase 1 ever begins, the boundaries are set in writing. This is the
+     <span class="term" data-tip="A written agreement defining what may be tested, how, when, and by whom — your legal permission to test.">Rules of Engagement</span>.
+     Hover the checklist items for why each matters.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>The authorization checklist</h3>
+      <ul>
+        <li><span class="term" data-tip="Exactly which IPs, domains, and apps are in-bounds — and which are explicitly off-limits.">Defined scope</span> — in/out of bounds, in writing.</li>
+        <li><span class="term" data-tip="Signed permission from someone with authority over the systems. Without it, testing is illegal.">Written authorization</span> — the "get-out-of-jail" letter.</li>
+        <li><span class="term" data-tip="Agreed dates/hours so testing doesn't disrupt production or trip incident response unexpectedly.">Testing window</span> — when you're allowed to test.</li>
+        <li><span class="term" data-tip="A named contact to call if something breaks or you find an active breach.">Emergency contact</span> — who to call if things go wrong.</li>
+        <li><span class="term" data-tip="Rules for sensitive data you encounter — usually: prove access, do not exfiltrate or expose real records.">Data handling</span> — how to treat anything sensitive.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The pentester's mindset</h3>
+      <ul>
+        <li><strong>Authorized, always.</strong> No scope creep, ever.</li>
+        <li><strong>Do no harm.</strong> Avoid actions that could crash production.</li>
+        <li><strong>Stay confidential.</strong> Findings belong to the client.</li>
+        <li><strong>Report honestly.</strong> Including what you <em>couldn't</em> break.</li>
+      </ul>
+      <p><small>Frameworks worth knowing:
+        <a href="https://www.eccouncil.org/code-of-ethics/" target="_blank" rel="noopener">EC-Council Code of Ethics</a> ·
+        <a href="https://www.isecom.org/OSSTMM.3.pdf" target="_blank" rel="noopener">OSSTMM</a></small></p>
+    </div>
+  </div>
+
+  <!-- Simple decision-flow SVG -->
+  <div class="card" style="text-align:center">
+    <svg viewBox="0 0 640 130" width="100%" style="max-width:640px" role="img"
+         aria-label="Decision flow: without written authorization, stop; with it, proceed to testing">
+      <defs>
+        <marker id="a2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker>
+      </defs>
+      <rect x="20" y="45" width="150" height="44" rx="9" fill="var(--surface-2)" stroke="var(--border)"/>
+      <text x="95" y="71" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="var(--font)">Engagement request</text>
+      <line x1="170" y1="67" x2="232" y2="67" stroke="var(--muted)" stroke-width="2" marker-end="url(#a2)"/>
+      <polygon points="300,30 380,67 300,104 220,67" fill="var(--p3-wash)" stroke="var(--p3)"/>
+      <text x="300" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" font-family="var(--font)">Written</text>
+      <text x="300" y="79" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" font-family="var(--font)">authorization?</text>
+      <!-- yes -->
+      <line x1="380" y1="67" x2="452" y2="67" stroke="var(--muted)" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="416" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ok)" font-family="var(--font)">YES</text>
+      <rect x="452" y="45" width="166" height="44" rx="9" fill="#e6f6ec" stroke="var(--ok)"/>
+      <text x="535" y="71" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="var(--font)">Begin Phase 1 · Recon</text>
+      <!-- no -->
+      <line x1="300" y1="104" x2="300" y2="122" stroke="var(--muted)" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="330" y="120" text-anchor="middle" font-size="11" font-weight="700" fill="var(--danger)" font-family="var(--font)">NO → STOP</text>
+    </svg>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: QUIZ  (click)  — questions live in the QUIZ array in the script
+     ============================================================ -->
+<div class="wrap">
+<section id="quiz">
+  <span class="section-tag">Check yourself · click</span>
+  <h2>Quick knowledge check</h2>
+  <p>Five questions. Pick an answer to see if it's right and why.</p>
+  <div class="card" id="quizCard"><!-- built by script --></div>
+</section>
+</div>
+
+<!-- ============================================================
+     SECTION: RESOURCES  (editable link fields — fill in over time)
+     Keep the [ add link ] pattern from the proposal so updates are one-line edits.
+     ============================================================ -->
+<div class="wrap">
+<section id="resources">
+  <span class="section-tag">Go deeper</span>
+  <h2>Reputable sources &amp; links</h2>
+  <p>Vetted references for each part of the lifecycle. Course-specific links are left as
+     editable fields — fill them in as we lock down the best sources.</p>
+
+  <div class="card">
+    <h3>Standards &amp; methodologies</h3>
+    <div class="res"><b>PTES — Penetration Testing Execution Standard</b>
+      <a href="http://www.pentest-standard.org/" target="_blank" rel="noopener">pentest-standard.org</a></div>
+    <div class="res"><b>NIST SP 800-115 — Technical Guide to Security Testing</b>
+      <a href="https://csrc.nist.gov/pubs/sp/800/115/final" target="_blank" rel="noopener">csrc.nist.gov</a></div>
+    <div class="res"><b>OWASP Web Security Testing Guide</b>
+      <a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank" rel="noopener">owasp.org</a></div>
+    <div class="res"><b>OSSTMM — Open Source Security Testing Methodology Manual</b>
+      <a href="https://www.isecom.org/OSSTMM.3.pdf" target="_blank" rel="noopener">isecom.org</a></div>
+    <div class="res"><b>MITRE ATT&amp;CK — adversary techniques</b>
+      <a href="https://attack.mitre.org/" target="_blank" rel="noopener">attack.mitre.org</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Learn &amp; practice (legally)</h3>
+    <div class="res"><b>TryHackMe</b>
+      <a href="https://tryhackme.com/" target="_blank" rel="noopener">tryhackme.com</a></div>
+    <div class="res"><b>Hack The Box</b>
+      <a href="https://www.hackthebox.com/" target="_blank" rel="noopener">hackthebox.com</a></div>
+    <div class="res"><b>PortSwigger Web Security Academy (free)</b>
+      <a href="https://portswigger.net/web-security" target="_blank" rel="noopener">portswigger.net</a></div>
+    <div class="res"><b>OWASP Juice Shop (course lab)</b>
+      <a href="https://owasp.org/www-project-juice-shop/" target="_blank" rel="noopener">owasp.org</a></div>
+    <div class="res"><b>HackTricks reference</b>
+      <a href="https://book.hacktricks.xyz/" target="_blank" rel="noopener">book.hacktricks.xyz</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Course links — fill these in</h3>
+    <div class="res"><b>Curriculum GitHub repository (source of truth)</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Vulhub project</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Proxmox / VPN access (off-campus)</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>DogPark lab — network map</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Pen-testing phases reference (instructor)</b><span class="fill">[ add link ]</span></div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><strong>The Portable Course</strong> · Module 01 — Phases of Penetration Testing ·
+       Template v1.0</p>
+    <p>Authorized / lab use only. Built to be edited: change the design system at the top of
+       the file, the words in the body, and the quiz/phase arrays in the script.</p>
+  </div>
+</footer>
+
+<!-- ============================================================
+     3. SCRIPT  ·  one small block per behaviour
+     ============================================================ -->
+<script>
+(function(){
+  "use strict";
+
+  /* ---- Theme toggle (persists in localStorage) -------------------- */
+  var root = document.documentElement;
+  var saved = localStorage.getItem("tpc-theme");
+  if(saved){ root.setAttribute("data-theme", saved); }
+  document.getElementById("themeBtn").addEventListener("click", function(){
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tpc-theme", next);
+  });
+
+  /* ---- Reading-progress bar -------------------------------------- */
+  var bar = document.getElementById("progress");
+  window.addEventListener("scroll", function(){
+    var h = document.documentElement;
+    var pct = h.scrollTop / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = pct + "%";
+  }, {passive:true});
+
+  /* ---- Stepper: click a phase to scroll to it -------------------- */
+  document.getElementById("stepper").addEventListener("click", function(e){
+    var step = e.target.closest(".step");
+    if(step){ document.querySelector(step.dataset.go).scrollIntoView({behavior:"smooth"}); }
+  });
+
+  /* ---- Tabs (framework cross-map) -------------------------------- */
+  document.querySelectorAll("[data-tabs]").forEach(function(group){
+    var tabs = group.querySelectorAll(".tab");
+    var panels = group.parentElement.querySelectorAll(".tabpanel");
+    tabs.forEach(function(tab){
+      tab.addEventListener("click", function(){
+        tabs.forEach(function(t){ t.classList.remove("active"); });
+        panels.forEach(function(p){ p.classList.remove("active"); });
+        tab.classList.add("active");
+        group.parentElement.querySelector('[data-panel="'+tab.dataset.tab+'"]').classList.add("active");
+      });
+    });
+  });
+
+  /* ---- Accordions (click to slide open) -------------------------- */
+  document.querySelectorAll(".acc-head").forEach(function(head){
+    head.addEventListener("click", function(){
+      var acc = head.parentElement;
+      var body = acc.querySelector(".acc-body");
+      var open = acc.classList.toggle("open");
+      body.style.maxHeight = open ? body.scrollHeight + "px" : null;
+    });
+  });
+
+  /* ---- Copy buttons ---------------------------------------------- */
+  document.querySelectorAll(".copy-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var text = btn.parentElement.querySelector("pre").innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        var old = btn.textContent; btn.textContent = "Copied ✓";
+        setTimeout(function(){ btn.textContent = old; }, 1400);
+      });
+    });
+  });
+
+  /* ---- Active-section highlight in the top nav ------------------- */
+  var navLinks = document.querySelectorAll("#nav a");
+  var byId = {};
+  navLinks.forEach(function(a){ byId[a.getAttribute("href").slice(1)] = a; });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.remove("active"); });
+        var link = byId[en.target.id]; if(link){ link.classList.add("active"); }
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(s){ io.observe(s); });
+
+  /* ================================================================
+     EDIT-ME DATA  ·  phases (scrubber) + quiz questions
+     ================================================================ */
+  var PHASES = [
+    {n:1, name:"Reconnaissance",            v:"--p1", w:"--p1-wash",
+     focus:"Gather intelligence on the target — quietly.",
+     detail:"Build a profile from public and light-touch sources: domains, IP ranges, people, and the technology stack. Strong recon makes every later phase faster."},
+    {n:2, name:"Scanning & Enumeration",    v:"--p2", w:"--p2-wash",
+     focus:"Map the live attack surface.",
+     detail:"Discover live hosts, open ports, service versions, then enumerate named resources — accounts, shares, directories — and line them up against known vulnerabilities."},
+    {n:3, name:"Gaining Access",            v:"--p3", w:"--p3-wash",
+     focus:"Exploit a weakness to get a foothold.",
+     detail:"Turn a vulnerability into access: an exploit, valid credentials, or app-level control. Capture proof — and never step outside the authorized scope."},
+    {n:4, name:"Maintaining Access",        v:"--p4", w:"--p4-wash",
+     focus:"Persist, escalate, and demonstrate impact.",
+     detail:"Escalate privileges, establish (documented) persistence, and pivot laterally to show how far a real attacker could reach toward the crown jewels."},
+    {n:5, name:"Covering Tracks & Reporting", v:"--p5", w:"--p5-wash",
+     focus:"Clean up and deliver the report.",
+     detail:"Reverse every change you made, then write the deliverable: executive summary, evidence-backed findings with severity, and prioritized remediation."}
+  ];
+
+  var QUIZ = [
+    {q:"What must exist before Phase 1 (Reconnaissance) can legally begin?",
+     opts:["A fast internet connection","Written authorization defining the scope","A zero-day exploit","Admin access to the target"],
+     correct:1,
+     why:"Written authorization (the rules of engagement) is the legal foundation of every test. No permission, no test."},
+    {q:"Which phase distinguishes passive from active information gathering?",
+     opts:["Scanning & Enumeration","Gaining Access","Reconnaissance","Reporting"],
+     correct:2,
+     why:"Reconnaissance splits into passive (no packets to the target) and active (you interact with it, which can be logged)."},
+    {q:"Enumeration differs from scanning because it…",
+     opts:["Is fully automated","Pulls named resources like users and shares","Only pings hosts","Happens after reporting"],
+     correct:1,
+     why:"Scanning finds what's there (ports/services); enumeration extracts specific named items — accounts, shares, directories."},
+    {q:"In an authorized test, 'Maintaining Access' is mainly about…",
+     opts:["Hiding from the client forever","Demonstrating real business impact via escalation and pivoting","Deleting the client's data","Selling the access"],
+     correct:1,
+     why:"Post-exploitation proves impact — privilege escalation and lateral movement show how far an attacker could really get."},
+    {q:"What makes Phase 5 different for a pentester versus a criminal?",
+     opts:["The pentester documents everything and restores the environment","The pentester deletes all logs","There is no difference","The pentester keeps the access secret"],
+     correct:0,
+     why:"A professional reverses changes and delivers a clear report — the report is the actual product of the engagement."}
+  ];
+
+  /* ---- Scrubber: render the active phase panel ------------------- */
+  var scrub = document.getElementById("scrub");
+  var panel = document.getElementById("scrubPanel");
+  function renderScrub(){
+    var p = PHASES[scrub.value - 1];
+    panel.style.background = "var(" + p.w + ")";
+    panel.innerHTML =
+      '<span class="badge" style="background:var('+p.v+')">PHASE '+p.n+'</span>'+
+      '<h3 style="color:var('+p.v+')">'+p.name+'</h3>'+
+      '<p><strong>'+p.focus+'</strong></p>'+
+      '<p style="margin-bottom:0">'+p.detail+'</p>';
+  }
+  scrub.addEventListener("input", renderScrub);
+  renderScrub();
+
+  /* ---- Quiz: build from the QUIZ array --------------------------- */
+  var quizCard = document.getElementById("quizCard");
+  var current = 0, score = 0, answered = false;
+  function renderQuiz(){
+    var item = QUIZ[current];
+    answered = false;
+    var html = '<p class="quiz-q">Q'+(current+1)+' / '+QUIZ.length+'. '+item.q+'</p><div class="quiz-opts">';
+    item.opts.forEach(function(opt, i){
+      html += '<button class="quiz-opt" data-i="'+i+'">'+opt+'</button>';
+    });
+    html += '</div><p class="quiz-explain"></p>'+
+            '<div class="quiz-foot"><button id="quizNext" disabled>Next →</button>'+
+            '<span id="quizScore">Score: '+score+' / '+QUIZ.length+'</span></div>';
+    quizCard.innerHTML = html;
+
+    quizCard.querySelectorAll(".quiz-opt").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if(answered) return;
+        answered = true;
+        var i = +btn.dataset.i;
+        var correct = item.correct;
+        quizCard.querySelectorAll(".quiz-opt").forEach(function(b){
+          if(+b.dataset.i === correct) b.classList.add("correct");
+        });
+        if(i !== correct){ btn.classList.add("wrong"); } else { score++; }
+        var ex = quizCard.querySelector(".quiz-explain");
+        ex.textContent = (i===correct ? "✓ Correct. " : "✗ Not quite. ") + item.why;
+        ex.classList.add("show");
+        quizCard.querySelector("#quizScore").textContent = "Score: "+score+" / "+QUIZ.length;
+        quizCard.querySelector("#quizNext").disabled = false;
+      });
+    });
+
+    quizCard.querySelector("#quizNext").addEventListener("click", function(){
+      current++;
+      if(current < QUIZ.length){ renderQuiz(); }
+      else {
+        quizCard.innerHTML = '<h3>Done — you scored '+score+' / '+QUIZ.length+'.</h3>'+
+          '<p>'+(score===QUIZ.length ? "Perfect. You've got the lifecycle cold." :
+                 "Re-skim the phases above and try again — repetition is the point.")+'</p>'+
+          '<div class="quiz-foot"><button id="quizRetry">↻ Retry</button></div>';
+        quizCard.querySelector("#quizRetry").addEventListener("click", function(){
+          current = 0; score = 0; renderQuiz();
+        });
+      }
+    });
+  }
+  renderQuiz();
+
+})();
+</script>
+</body>
+</html>

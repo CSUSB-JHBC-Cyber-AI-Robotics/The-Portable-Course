@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Ultimate Thumb Drive — what it is, why it matters, the tools, and an accurate step-by-step build (Medicat, YUMI, PortableApps). The Portable Course.">
+<title>Ultimate Thumb Drive Guide · The Portable Course</title>
+
+<!-- ============================================================================
+     THE PORTABLE COURSE  ·  Module 04 — Ultimate Thumb Drive Guide
+     Inherits Template v1.0 + the terminal / red-team theme.
+     ----------------------------------------------------------------------------
+     ACCURACY NOTE FOR EDITORS:
+       Every install step below is taken from the official IST 4620 Thumbdrive
+       Project Instructions (the installer screenshots). Drive letters (D:, E:),
+       disk numbers and version numbers shown are EXAMPLES from those screenshots
+       — students must identify their OWN USB. If the source instructions change,
+       update the MEDICAT_STEPS array in the script and the matching prose.
+     FILE MAP: 1) design system  2) components  3) content  4) script (EDIT-ME
+       arrays: MEDICAT_STEPS for the walkthrough, TASKS for the build tracker).
+     ========================================================================= -->
+
+<style>
+/* ======================================================================
+   1. DESIGN SYSTEM  ·  shared across every Portable Course file
+   ====================================================================== */
+:root{
+  --bg:#f5f7fb; --surface:#ffffff; --surface-2:#eef2f8;
+  --text:#1b2333; --muted:#5a6678; --border:#dde3ec;
+  --shadow:0 1px 2px rgba(20,30,55,.06), 0 8px 24px rgba(20,30,55,.06);
+  --primary:#2f5bdc; --primary-ink:#1c3aa0; --primary-wash:#e9eefc;
+  --red:#e02436;          /* red-team identity accent */
+  --green:#0c9b73;        /* terminal / console accent */
+  --ok:#1f9d56; --warn:#d98324; --danger:#d23f54;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --maxw:980px; --radius:14px; --radius-sm:9px; --gap:22px;
+}
+[data-theme="dark"]{
+  --bg:#0a0e15; --surface:#0f1420; --surface-2:#161e2d;
+  --text:#cdd6e5; --muted:#74839a; --border:#1d2636;
+  --shadow:0 0 0 1px rgba(255,62,77,.05), 0 14px 40px rgba(0,0,0,.55);
+  --primary:#54a6ff; --primary-ink:#a9cdff; --primary-wash:#0e1f34;
+  --red:#ff3e4d; --green:#36d8a6;
+}
+
+/* ======================================================================
+   2. BASE + COMPONENTS  (identical to the other course files)
+   ====================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+h1,h2,h3,h4{line-height:1.25; font-weight:700; margin:1.6em 0 .5em}
+h2{font-size:1.7rem; scroll-margin-top:84px}
+h3{font-size:1.25rem}
+p{margin:.7em 0}
+a{color:var(--primary); text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono); font-size:.92em; background:var(--surface-2); padding:.12em .4em; border-radius:6px}
+small{color:var(--muted)}
+hr{border:0; border-top:1px solid var(--border); margin:2.4em 0}
+
+#progress{position:fixed; top:0; left:0; height:3px; width:0;
+  background:linear-gradient(90deg,var(--red),var(--green)); z-index:60; transition:width .1s linear}
+
+header.topbar{position:sticky; top:0; z-index:50; background:var(--surface); border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex; align-items:center; gap:18px; height:60px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; white-space:nowrap; font-family:var(--mono)}
+.brand small{display:block; font-weight:500; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--red); line-height:1}
+.brand svg{filter:drop-shadow(0 0 5px rgba(255,62,77,.55))}
+.nav{display:flex; gap:4px; margin-left:auto; overflow:auto}
+.nav a{color:var(--muted); padding:7px 11px; border-radius:8px; font-size:.8rem; font-weight:600;
+  white-space:nowrap; font-family:var(--mono); letter-spacing:-.01em}
+.nav a:hover{background:var(--surface-2); text-decoration:none}
+.nav a.active{color:var(--primary); background:var(--primary-wash)}
+.icon-btn{border:1px solid var(--border); background:var(--surface); color:var(--text);
+  width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.05rem; display:grid; place-items:center}
+.icon-btn:hover{border-color:var(--red); box-shadow:0 0 16px -5px var(--red)}
+
+.hero{padding:54px 0 10px; text-align:center}
+.hero .kicker{display:inline-block; font-family:var(--mono); background:transparent;
+  border:1px solid var(--border); color:var(--green); font-weight:700; font-size:.78rem;
+  letter-spacing:.08em; text-transform:uppercase; padding:6px 13px; border-radius:999px}
+.hero .kicker::before{content:"~$ "; color:var(--muted)}
+.hero h1{font-family:var(--mono); font-size:2.25rem; line-height:1.15; margin:.4em 0 .15em; letter-spacing:-.02em}
+.hero h1::after{content:"\2587"; color:var(--green); margin-left:5px; animation:cursor 1.1s steps(1) infinite}
+@keyframes cursor{50%{opacity:0}}
+.hero p.lead{font-size:1.18rem; color:var(--muted); max-width:680px; margin:.4em auto 0}
+.cmdline{font-family:var(--mono); color:var(--muted); font-size:.9rem; margin:16px 0 0; word-break:break-word}
+.cmdline b{color:var(--green); font-weight:600} .cmdline i{color:var(--red); font-style:normal}
+.cmdline::after{content:" \2587"; color:var(--green); animation:cursor 1.1s steps(1) infinite}
+.meta-row{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:22px}
+.chip{font-family:var(--mono); background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  padding:6px 14px; font-size:.8rem; font-weight:600; box-shadow:var(--shadow)}
+
+.card{position:relative; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow); margin:var(--gap) 0; transition:box-shadow .18s}
+.card::before{content:""; position:absolute; left:-1px; right:-1px; top:-1px; height:2px;
+  background:linear-gradient(90deg, var(--red), transparent 55%); border-radius:var(--radius) var(--radius) 0 0}
+.card:hover{box-shadow:0 0 0 1px rgba(255,62,77,.30), var(--shadow)}
+.grid{display:grid; gap:var(--gap)}
+@media(min-width:720px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
+
+.note{border-left:4px solid var(--primary); background:var(--primary-wash);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 18px; margin:var(--gap) 0}
+.note.warn{border-color:var(--warn); background:#fdeeda}
+.note.danger{border-color:var(--danger); background:#fce4ee}
+.note.ok{border-color:var(--ok); background:#e6f6ec}
+[data-theme="dark"] .note.warn{background:#33260f}
+[data-theme="dark"] .note.danger{background:#321626}
+[data-theme="dark"] .note.ok{background:#10251a}
+.note b{display:block; margin-bottom:2px}
+
+.snippet{position:relative; background:var(--surface-2); border:1px solid var(--border); border-left:3px solid var(--green);
+  border-radius:var(--radius-sm); padding:14px 16px; margin:14px 0; overflow:auto}
+.snippet pre{margin:0; font-family:var(--mono); font-size:.9rem; white-space:pre}
+
+.term-tip{border-bottom:2px dotted var(--primary); cursor:help; position:relative}
+.term-tip:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:150%;
+  transform:translateX(-50%); width:max-content; max-width:260px; background:var(--text); color:var(--bg);
+  font-size:.82rem; line-height:1.4; font-weight:500; text-align:left; padding:9px 12px;
+  border-radius:9px; box-shadow:var(--shadow); z-index:40; white-space:normal}
+
+.tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
+.tab{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  padding:8px 15px; border-radius:999px; font-weight:700; font-size:.86rem; cursor:pointer}
+.tab.active{background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 0 16px -3px var(--primary)}
+.tab:hover{box-shadow:0 0 20px -7px var(--green)}
+.tabpanel{display:none} .tabpanel.active{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(4px)}to{opacity:1}}
+
+.acc{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin:12px 0}
+.acc-head{width:100%; text-align:left; background:var(--surface); border:0; cursor:pointer;
+  padding:15px 18px; font-weight:700; font-size:1rem; color:var(--text); display:flex; align-items:center; gap:12px}
+.acc-head:hover{background:var(--surface-2); box-shadow:0 0 20px -7px var(--green)}
+.acc-head .caret{margin-left:auto; transition:transform .25s; color:var(--muted)}
+.acc.open .acc-head .caret{transform:rotate(90deg)}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .3s ease}
+.acc-body .inner{padding:4px 18px 18px}
+
+table{width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--surface-2); font-weight:700}
+
+.res{display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; padding:12px 0; border-bottom:1px solid var(--border)}
+.res b{flex:1 1 240px}
+.res .fill{color:var(--warn); font-weight:700; font-family:var(--mono); font-size:.85rem}
+
+footer{margin:60px 0 40px; color:var(--muted); font-size:.9rem; text-align:center}
+section{padding-top:8px}
+.section-tag{font-family:var(--mono); font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--red)}
+.section-tag::before{content:"// "; color:var(--green)}
+h2{font-family:var(--mono); letter-spacing:-.01em}
+h2::before{content:"$ "; color:var(--green)}
+
+body{background-image:
+  linear-gradient(rgba(120,140,170,.05) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(120,140,170,.05) 1px, transparent 1px);
+  background-size:42px 42px}
+body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55;
+  background:repeating-linear-gradient(0deg, rgba(127,150,180,.05) 0 1px, transparent 1px 3px)}
+.topbar{box-shadow:0 1px 0 rgba(255,62,77,.18)}
+
+/* ---- Tool cards ---- */
+.tool{position:relative}
+.tool .ic{font-size:1.7rem}
+.tool .scn{margin-top:10px; font-size:.86rem; color:var(--muted); border-top:1px dashed var(--border); padding-top:10px}
+.tool .scn b{color:var(--green); font-family:var(--mono); font-size:.72rem; letter-spacing:.05em; text-transform:uppercase; display:block; margin-bottom:2px}
+
+/* ---- Install-order stepper ---- */
+.order{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:6px 0}
+@media(max-width:680px){ .order{grid-template-columns:1fr 1fr} }
+.order .o{border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-sm);
+  padding:13px 8px; text-align:center; font-weight:700; font-size:.86rem; position:relative}
+.order .o .n{display:block; font-family:var(--mono); font-size:.72rem; color:var(--green)}
+.order .o.req{border-color:var(--red)}
+
+/* ---- Faux installer "screen" walkthrough ---- */
+.screen{background:#0d1117; border:1px solid #232c3d; border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+.screen-bar{display:flex; align-items:center; gap:7px; padding:9px 13px; background:#1b1f2a; border-bottom:1px solid #232c3d}
+.screen-bar .dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+.screen-bar .ttl{margin-left:8px; color:#8b97a8; font-family:var(--mono); font-size:.76rem}
+.screen-body{padding:20px 18px; min-height:150px; font-family:var(--mono); color:#cdd6e4; font-size:.9rem}
+.mock-btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
+.mbtn{padding:10px 16px; border-radius:6px; font-weight:700; font-size:.82rem; border:1px solid #2b3445; color:#cdd6e4; background:#161b26}
+.mbtn.green{background:#10351f; border-color:#1f9d56; color:#74e6a3}
+.mbtn.red{background:#3a1620; border-color:#ff5168; color:#ff8da0}
+.mbtn.sel{outline:3px solid var(--green); outline-offset:2px}
+.mbtn.selr{outline:3px solid var(--red); outline-offset:2px}
+.wf-steps{display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 0}
+.wf-dot{width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:var(--surface);
+  color:var(--muted); font-weight:700; font-size:.8rem; cursor:pointer; display:grid; place-items:center; font-family:var(--mono)}
+.wf-dot.active{background:var(--primary); color:#fff; border-color:var(--primary)}
+.wf-nav{display:flex; align-items:center; gap:12px; margin-top:14px}
+.wf-nav button{border:1px solid var(--border); background:var(--surface); color:var(--text);
+  font-weight:700; padding:9px 16px; border-radius:9px; cursor:pointer; font-family:var(--mono)}
+.wf-nav button:disabled{opacity:.4; cursor:not-allowed}
+.wf-step-do{margin-top:14px}
+.wf-step-do .lbl{font-family:var(--mono); font-size:.74rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--green)}
+
+/* ---- Build tracker ---- */
+.tracker-top{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:8px}
+.progress-wrap{flex:1 1 220px; background:var(--surface-2); border-radius:999px; height:14px; overflow:hidden}
+.progress-fill{height:100%; width:0; background:linear-gradient(90deg,var(--red),var(--green)); transition:width .35s ease}
+.tracker-count{font-weight:800; font-size:.95rem; white-space:nowrap; font-family:var(--mono)}
+.task-row{display:flex; align-items:center; gap:14px; padding:13px 4px; border-bottom:1px solid var(--border)}
+.task-row label{display:flex; align-items:center; gap:13px; cursor:pointer; flex:1; min-width:0}
+.task-row input{width:20px; height:20px; accent-color:var(--green); flex:none; cursor:pointer}
+.task-name{font-weight:700}
+.task-row.done .task-name{text-decoration:line-through; color:var(--muted)}
+.task-sub{font-size:.8rem; color:var(--muted)}
+.pill{font-size:.72rem; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap; font-family:var(--mono)}
+.pill.req{background:var(--primary-wash); color:var(--primary-ink)}
+.reset-btn{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  border-radius:8px; padding:7px 13px; font-weight:700; font-size:.82rem; cursor:pointer; font-family:var(--mono)}
+.reset-btn:hover{color:var(--danger); border-color:var(--danger)}
+</style>
+</head>
+
+<body>
+<div id="progress"></div>
+
+<!-- ============================================================  TOP NAV  ============================================================ -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="7" y="2.5" width="10" height="15" rx="2.2" fill="var(--primary)"/>
+        <rect x="9.4" y="5" width="5.2" height="2" rx="1" fill="#fff"/>
+        <rect x="10" y="17.5" width="4" height="4" rx="1" fill="var(--primary-ink)"/>
+      </svg>
+      <span>Portable Course<small>Thumb Drive</small></span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#start">Start</a>
+      <a href="#what">What &amp; why</a>
+      <a href="#tools">Tools</a>
+      <a href="#before">Before you start</a>
+      <a href="#order">Order</a>
+      <a href="#medicat">Medicat</a>
+      <a href="#yumi">YUMI</a>
+      <a href="#apps">PortableApps</a>
+      <a href="#tracker">Tracker</a>
+      <a href="#help">Stuck?</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<!-- ============================================================  HERO  ============================================================ -->
+<div class="wrap">
+  <div class="hero" id="start">
+    <span class="kicker">The Portable Course · Module 04</span>
+    <h1>The Ultimate Thumb Drive</h1>
+    <p class="lead">One USB stick that boots, rescues, scans, and hacks — a complete portable
+      IT &amp; security toolkit you build yourself. This is the accurate, step-by-step build.</p>
+    <p class="cmdline"><b>root@portable-course</b>:<i>~/module-04</i>$ ./build-toolkit --medicat --yumi --kali --verify</p>
+    <div class="meta-row">
+      <span class="chip">⏱ ~20 min read</span>
+      <span class="chip">🧰 5 tools, 1 stick</span>
+      <span class="chip">✅ Steps verified from the installers</span>
+      <span class="chip">💾 Build tracker included</span>
+    </div>
+  </div>
+
+  <div class="note danger">
+    <b>⚠ The one mistake that ruins the build: the wrong drive.</b>
+    These installers write directly to disks. The drive letters and disk numbers in this guide
+    (<code>D:</code>, <code>E:</code>, "Disk 2"…) are <strong>examples from the screenshots</strong> —
+    <strong>yours will differ</strong>. Always identify your USB by its <em>size and label</em> before
+    you select it, and <strong>never</strong> pick your internal <code>C:</code> drive. When Medicat
+    asks, leave <strong>format set to “No.”</strong>
+  </div>
+</div>
+
+<!-- ============================================================  WHAT & WHY  ============================================================ -->
+<div class="wrap">
+<section id="what">
+  <span class="section-tag">Orientation</span>
+  <h2>What this project is — and why it's worth it</h2>
+  <p>You're turning an ordinary USB stick into a <strong>bootable, multi-tool field kit</strong>: a
+     stick you can plug into almost any computer to repair it, scan it for malware, recover files,
+     reset a forgotten password, image a disk, or boot into a full hacking distro — without
+     installing a thing on the host machine.</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h3>🎒 It goes everywhere</h3>
+      <p>Your whole toolkit rides in a pocket. Borrow any PC and you bring your environment with you —
+         no admin rights on the host required for most of it.</p>
+    </div>
+    <div class="card">
+      <h3>🛠️ It's a real job skill</h3>
+      <p>Boot media, offline malware removal, disk imaging and rescue are core help-desk and security
+         tasks. Building this <em>is</em> the skill — not just reading about it.</p>
+    </div>
+    <div class="card">
+      <h3>🧩 It's modular</h3>
+      <p>Five independent tools share one drive. You can add, remove, or update any one of them later
+         without rebuilding from scratch.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  TOOLS  ============================================================ -->
+<div class="wrap">
+<section id="tools">
+  <span class="section-tag">The kit</span>
+  <h2>The five tools — and when each one saves you</h2>
+  <p>Each tool earns its slot on the drive. Here's what it is, why it's valuable, and a real
+     scenario where you'd reach for it.</p>
+
+  <div class="grid cols-2">
+    <div class="card tool">
+      <div class="ic">🩺</div>
+      <h3>Medicat USB</h3>
+      <p>A <span class="term-tip" data-tip="A USB tool that uses the Ventoy bootloader to boot multiple ISOs and recovery environments from one drive.">Ventoy-based</span>
+         bootable rescue suite — antivirus, diagnostics, partition tools, password reset, data
+         recovery and a Windows PE environment, all bootable.</p>
+      <div class="scn"><b>Scenario</b>A laptop won't boot or is infected. Boot Medicat, scan and
+        clean it offline, then recover the user's files before reinstalling.</div>
+    </div>
+
+    <div class="card tool">
+      <div class="ic">🐉</div>
+      <h3>YUMI + Kali Linux</h3>
+      <p>YUMI makes the drive <span class="term-tip" data-tip="Boot more than one operating system or tool from a single USB and pick at startup.">multiboot</span>;
+         on it you install <strong>Kali Linux</strong>, the standard penetration-testing distro.</p>
+      <div class="scn"><b>Scenario</b>You need a full pentest toolset for an authorized lab on a
+        machine that isn't yours — boot Kali from the stick, leave no trace on the host.</div>
+    </div>
+
+    <div class="card tool">
+      <div class="ic">📦</div>
+      <h3>PortableApps</h3>
+      <p>Run real Windows apps — a hardened browser, antivirus scanners, utilities — straight from
+         the USB. No install, often no admin rights needed.</p>
+      <div class="scn"><b>Scenario</b>On a locked-down public or lab PC, launch your own trusted
+        browser and tools instead of whatever's on the host.</div>
+    </div>
+
+    <div class="card tool">
+      <div class="ic">🌐</div>
+      <h3>netboot.xyz</h3>
+      <p>A tiny boot menu that pulls OS installers and tools <em>over the network</em> instead of
+         from local ISOs (best when you self-host the files).</p>
+      <div class="scn"><b>Scenario</b>Install or rescue an operating system without carrying a pile
+        of ISO files — fetch what you need on demand.</div>
+    </div>
+
+    <div class="card tool">
+      <div class="ic">🧬</div>
+      <h3>Clonezilla (“ghosting”)</h3>
+      <p>Free disk-imaging and cloning. Capture a whole drive to an image, or clone a known-good
+         image onto other machines.</p>
+      <div class="scn"><b>Scenario</b>Before a risky change, image the whole disk so you can restore
+        it exactly — or deploy one image to many identical PCs.</div>
+    </div>
+
+    <div class="card tool">
+      <div class="ic">🧠</div>
+      <h3>Put together…</h3>
+      <p>…these five turn one stick into a portable IT/security department: rescue, clean, recover,
+         image, and assess — the exact toolkit a field technician carries.</p>
+      <div class="scn"><b>Why it matters</b>Reliable access to your tools on <em>any</em> machine,
+        without depending on what's installed there.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  BEFORE YOU START  ============================================================ -->
+<div class="wrap">
+<section id="before">
+  <span class="section-tag">Read first</span>
+  <h2>Before you start — the ground rules</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>✅ You'll need</h3>
+      <ul>
+        <li>A USB drive <strong>32&nbsp;GB or larger</strong> (bigger is better — these tools are large).</li>
+        <li>A Windows PC to build from.</li>
+        <li>Patience: the Medicat download is big and <strong>slow on purpose</strong>.</li>
+        <li>All five installers downloaded ahead of time (links in <a href="#resources">Resources</a>).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⛔ The golden rules</h3>
+      <ul>
+        <li><strong>Identify your USB</strong> by size/label every time you select a drive.</li>
+        <li>During <strong>Medicat</strong>, keep <strong>“Toggle Drive Format” = No</strong>.</li>
+        <li>Download Medicat via <strong>CDN (direct)</strong>, not torrent, on the school network.</li>
+        <li>Build in the <strong>correct order</strong> (next section) — it matters.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <b>Partitions.</b> Per the project instructions, your thumb drive should end up with
+    <strong>exFAT</strong> and <strong>FAT</strong> partitions, and you use the
+    <strong>YUMI exFAT</strong> installer to prepare it. YUMI is step&nbsp;1 precisely
+    <em>because</em> its first run formats and prepares the drive — after that, nothing else should
+    format it.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  ORDER  ============================================================ -->
+<div class="wrap">
+<section id="order">
+  <span class="section-tag">Sequence</span>
+  <h2>Install in this order</h2>
+  <p>The order is from the official instructions. YUMI first (it prepares the drive); everything
+     else is added on top without formatting again.</p>
+
+  <div class="order">
+    <div class="o req"><span class="n">STEP 1</span>YUMI exFAT<br><small>+ Kali</small></div>
+    <div class="o req"><span class="n">STEP 2</span>PortableApps</div>
+    <div class="o"><span class="n">STEP 3</span>netboot.xyz<br><small>(self-host)</small></div>
+    <div class="o req"><span class="n">STEP 4</span>Medicat<br><small>format = No</small></div>
+    <div class="o"><span class="n">STEP 5</span>Clonezilla</div>
+  </div>
+  <p><small><span class="pill req">Required</span> steps are the core of the build; netboot.xyz and
+     Clonezilla round it out.</small></p>
+</section>
+</div>
+
+<!-- ============================================================
+     MEDICAT — interactive, screen-by-screen walkthrough (the part students get stuck on)
+     Each step mirrors an actual installer screen. EDIT in MEDICAT_STEPS below.
+     ============================================================ -->
+<div class="wrap">
+<section id="medicat">
+  <span class="section-tag">Step 4 · the tricky one</span>
+  <h2>Medicat, screen by screen</h2>
+  <p>This is where most people get stuck, so we walk <em>every</em> installer screen. Use
+     <strong>Next / Back</strong> (or the dots) to step through exactly what you'll see and do.</p>
+
+  <div class="card">
+    <div class="screen">
+      <div class="screen-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="ttl" id="mTitle">Medicat Installer</span></div>
+      <div class="screen-body" id="mBody"></div>
+    </div>
+    <div class="wf-step-do">
+      <div class="lbl">Do this</div>
+      <div id="mDo"></div>
+    </div>
+    <div class="wf-steps" id="mDots"></div>
+    <div class="wf-nav">
+      <button id="mPrev">← Back</button>
+      <button id="mNext">Next →</button>
+      <span id="mCounter" style="color:var(--muted); font-family:var(--mono); font-size:.85rem"></span>
+    </div>
+  </div>
+
+  <div class="note danger">
+    <b>The two screens people miss.</b> (1) On the main menu, the red button must read
+    <strong>“TOGGLE DRIVE FORMAT (CURRENTLY No)”</strong> — if it says <em>Yes</em>, click it once to
+    flip it back. (2) In the <strong>Browse For Folder</strong> dialog, select your <strong>USB</strong>
+    (shown as <code>Ventoy (D:)</code> in the example) — <strong>not</strong> your <code>C:</code> drive.
+  </div>
+  <div class="note">
+    <b>Prefer video?</b> The instructors' picks:
+    <a href="https://www.youtube.com/watch?v=627oSs_H1E0" target="_blank" rel="noopener">Medicat walkthrough</a>
+    and <a href="https://www.youtube.com/watch?v=0EtgwIajVqs" target="_blank" rel="noopener">Medicat + netboot.xyz overview</a>.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  YUMI  ============================================================ -->
+<div class="wrap">
+<section id="yumi">
+  <span class="section-tag">Step 1</span>
+  <h2>YUMI exFAT + Kali Linux</h2>
+  <p>YUMI prepares the drive and adds bootable distros. You'll put <strong>Kali Linux</strong> on it.</p>
+
+  <ol>
+    <li>Download <strong>YUMI exFAT</strong> from <a href="https://yumiusb.com/" target="_blank" rel="noopener">yumiusb.com</a>
+        (use the <em>exFAT</em> version, as the instructions specify).</li>
+    <li>Download the <strong>Kali Linux “Live” ISO</strong> from
+        <a href="https://www.kali.org/get-kali/" target="_blank" rel="noopener">kali.org</a> first.</li>
+    <li>Run YUMI. <strong>Step 1 — pick your USB</strong> (the screenshot shows
+        <code>E:\ (Disk 2) 232GB</code>; choose <em>yours</em>).</li>
+    <li><strong>Step 2 — choose distribution:</strong> select <strong>Kali Linux (Penetration Testing)</strong>.</li>
+    <li><strong>Step 3 — Browse</strong> to your <code>kali…live….iso</code> and select it.</li>
+    <li>Let YUMI prepare the drive and copy Kali. On the <em>first</em> run it formats the drive to
+        exFAT — that's expected because YUMI is step 1.</li>
+  </ol>
+  <div class="note warn"><b>After YUMI, never format again.</b> Every later tool (especially Medicat)
+    must be told <strong>not</strong> to format, or you'll wipe the work you just did.</div>
+  <p><small>Helpful video: <a href="https://www.youtube.com/watch?v=4btW5x_clpg" target="_blank" rel="noopener">netboot.xyz on USB</a> (covers multiboot setup).</small></p>
+</section>
+</div>
+
+<!-- ============================================================  PORTABLEAPPS  ============================================================ -->
+<div class="wrap">
+<section id="apps">
+  <span class="section-tag">Step 2</span>
+  <h2>PortableApps</h2>
+  <p>Portable Windows apps that run straight off the USB.</p>
+  <ol>
+    <li>Download the <strong>PortableApps.com Platform</strong> from
+        <a href="https://portableapps.com/" target="_blank" rel="noopener">portableapps.com</a>.</li>
+    <li>Run the installer and <strong>set the install location to your thumb drive</strong>
+        (change the destination folder to the USB, not your C: drive).</li>
+    <li>Pick the apps you want — it downloads and installs each one onto the drive (you'll see it
+        work through them, e.g. “Downloading 4 of 19: Firefox…”).</li>
+  </ol>
+  <p><strong>netboot.xyz (Step 3)</strong> and <strong>Clonezilla (Step 5)</strong> round out the
+     build. netboot.xyz needs you to self-host its files to be useful — follow the
+     <a href="https://netboot.xyz/docs/booting/usb/" target="_blank" rel="noopener">official USB docs</a>.
+     For Clonezilla, grab the stable release from
+     <a href="https://clonezilla.org/downloads/" target="_blank" rel="noopener">clonezilla.org</a> and
+     add it to the drive.</p>
+</section>
+</div>
+
+<!-- ============================================================  BUILD TRACKER  ============================================================ -->
+<div class="wrap">
+<section id="tracker">
+  <span class="section-tag">Your progress · saved</span>
+  <h2>Build tracker</h2>
+  <p>Tick each task as you finish it — progress is saved in this browser automatically.</p>
+
+  <div class="card">
+    <div class="tracker-top">
+      <div class="progress-wrap"><div class="progress-fill" id="trackFill"></div></div>
+      <span class="tracker-count" id="trackCount">0 / 0</span>
+      <button class="reset-btn" id="trackReset">↻ Reset</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  TROUBLESHOOT  ============================================================ -->
+<div class="wrap">
+<section id="help">
+  <span class="section-tag">When it sticks</span>
+  <h2>Stuck? The common snags</h2>
+
+  <div class="acc">
+    <button class="acc-head">The terminal title says “Select Administrator” and froze <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>This is a known Medicat quirk — the window changes from
+      “Administrator” to “Select Administrator” and pauses. Just press <strong>ENTER</strong> to
+      continue. (When prompted, choose your <strong>Ventoy</strong> partition.)</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">Medicat is asking to FORMAT the drive <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Don't let it. On the main menu the button should read
+      <strong>“TOGGLE DRIVE FORMAT (CURRENTLY No)”</strong>. If it says <em>Yes</em>, click it once to
+      switch it back to <em>No</em>, then click <strong>INSTALL MEDICAT</strong>. Formatting erases your
+      YUMI/Kali work.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">“Could not find the Medicat file(s)” <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>That's expected on a fresh install — the installer is a
+      small launcher, not the full image. Click <strong>YES</strong> to download, then choose
+      <strong>CDN</strong> (direct). It's a big file and will take a while.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">The download is painfully slow <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Expected — the Medicat image is large. Use
+      <strong>CDN</strong>, not torrent (torrent is unreliable on the school network), and let it run.
+      A wired connection helps.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">I can't tell which drive is my USB <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Open <strong>This PC</strong> / File Explorer and note the
+      drive's <strong>letter, label and size</strong> (e.g. a 232&nbsp;GB “YUMI”/“Ventoy” volume). Match
+      that exactly in the installer. When in doubt, unplug every other USB device first.</p></div></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  RESOURCES  ============================================================ -->
+<div class="wrap">
+<section id="resources">
+  <span class="section-tag">Downloads &amp; links</span>
+  <h2>Resources &amp; links</h2>
+  <div class="card">
+    <h3>The five tools</h3>
+    <div class="res"><b>YUMI (use the exFAT version)</b><a href="https://yumiusb.com/" target="_blank" rel="noopener">yumiusb.com</a></div>
+    <div class="res"><b>PortableApps.com Platform</b><a href="https://portableapps.com/" target="_blank" rel="noopener">portableapps.com</a></div>
+    <div class="res"><b>Medicat USB</b><a href="https://medicatusb.com/" target="_blank" rel="noopener">medicatusb.com</a></div>
+    <div class="res"><b>netboot.xyz (USB docs)</b><a href="https://netboot.xyz/docs/booting/usb/" target="_blank" rel="noopener">netboot.xyz/docs</a></div>
+    <div class="res"><b>Clonezilla (stable)</b><a href="https://clonezilla.org/downloads/" target="_blank" rel="noopener">clonezilla.org</a></div>
+    <div class="res"><b>Kali Linux (Live ISO)</b><a href="https://www.kali.org/get-kali/" target="_blank" rel="noopener">kali.org</a></div>
+  </div>
+  <div class="card">
+    <h3>Helpful videos (instructor picks)</h3>
+    <div class="res"><b>Medicat walkthrough</b><a href="https://www.youtube.com/watch?v=627oSs_H1E0" target="_blank" rel="noopener">youtube</a></div>
+    <div class="res"><b>netboot.xyz on USB</b><a href="https://www.youtube.com/watch?v=4btW5x_clpg" target="_blank" rel="noopener">youtube</a></div>
+    <div class="res"><b>Medicat + netboot.xyz overview</b><a href="https://www.youtube.com/watch?v=0EtgwIajVqs" target="_blank" rel="noopener">youtube</a></div>
+  </div>
+  <div class="card">
+    <h3>Course links — fill these in</h3>
+    <div class="res"><b>Curriculum GitHub repository</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Where to submit your finished drive / proof</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Instructor notes / netboot.xyz self-host setup</b><span class="fill">[ add link ]</span></div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><strong>The Portable Course</strong> · Module 04 — Ultimate Thumb Drive Guide · inherits Template v1.0</p>
+    <p>Install steps verified from the IST 4620 Thumbdrive Project Instructions. Drive letters and
+       versions shown are examples — always confirm your own USB.</p>
+  </div>
+</footer>
+
+<!-- ============================================================  3. SCRIPT  ============================================================ -->
+<script>
+(function(){
+  "use strict";
+  var root = document.documentElement;
+
+  /* ---- Theme (shared course key) --------------------------------- */
+  var saved = localStorage.getItem("tpc-theme");
+  if(saved){ root.setAttribute("data-theme", saved); }
+  document.getElementById("themeBtn").addEventListener("click", function(){
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tpc-theme", next);
+  });
+
+  /* ---- Progress bar ---------------------------------------------- */
+  var bar = document.getElementById("progress");
+  window.addEventListener("scroll", function(){
+    var h = document.documentElement;
+    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+  }, {passive:true});
+
+  /* ---- Accordions ------------------------------------------------ */
+  document.querySelectorAll(".acc-head").forEach(function(head){
+    head.addEventListener("click", function(){
+      var acc = head.parentElement, body = acc.querySelector(".acc-body");
+      var open = acc.classList.toggle("open");
+      body.style.maxHeight = open ? body.scrollHeight + "px" : null;
+    });
+  });
+
+  /* ---- Active-section highlight in nav --------------------------- */
+  var navLinks = document.querySelectorAll("#nav a"), byId = {};
+  navLinks.forEach(function(a){ byId[a.getAttribute("href").slice(1)] = a; });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.remove("active"); });
+        var link = byId[en.target.id]; if(link){ link.classList.add("active"); }
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(s){ io.observe(s); });
+
+  /* ================================================================
+     EDIT-ME DATA #1 · Medicat screen-by-screen walkthrough
+       Each step mirrors a real installer screen. "screen" is the faux
+       window content; "do" is the instruction shown beneath it.
+     ================================================================ */
+  var MEDICAT_STEPS = [
+    {ttl:"medicatusb.com",
+     screen:'Installer — Batch installer for Windows and Linux\n'+
+            '<div class="mock-btns"><span class="mbtn green sel">☁ Windows</span><span class="mbtn">☁ Linux</span></div>',
+     do:'On <b>medicatusb.com</b>, under <b>Installer</b>, click <b>Windows</b>. This downloads a small launcher named <code>Medicat_Installer.bat</code> (not the full image yet).'},
+    {ttl:"Run as administrator",
+     screen:'Medicat_Installer.bat\n\n<span style="color:#8b97a8">Right-click → Run as administrator → approve the User Account Control prompt.</span>',
+     do:'Launch <code>Medicat_Installer.bat</code> and <b>give it admin permission</b> when Windows asks.'},
+    {ttl:"Administrator: Medicat Installer [FILECHECK]",
+     screen:'WE ARE THE MEDICAT  💀\n\n<span style="color:#74e6a3">Press any key to continue . . .</span>',
+     do:'A file-check / ASCII-art screen appears, then an <b>MIT License</b> screen. Press <b>any key</b> to move past each one.'},
+    {ttl:"Administrator: Medicat Installer [MENU]",
+     screen:'<div class="mock-btns"><span class="mbtn green">INSTALL MEDICAT</span>'+
+            '<span class="mbtn red selr">TOGGLE DRIVE FORMAT (CURRENTLY No)</span></div>'+
+            '<div class="mock-btns"><span class="mbtn">MEDICAT DISCORD</span><span class="mbtn">VISIT SITE</span><span class="mbtn">CHECK USB FILES</span></div>',
+     do:'⚠ Make sure the red button reads <b>(CURRENTLY No)</b>. If it says <em>Yes</em>, click it once to flip it back to <b>No</b>. Then click <b>INSTALL MEDICAT</b>.'},
+    {ttl:"Administrator: Medicat Installer [CHOOSEINSTALL]",
+     screen:'We now need to find out what drive you will be installing to.\n\n'+
+            '<span style="color:#8b97a8">Browse For Folder:</span>\n'+
+            '<div class="mock-btns"><span class="mbtn selr">💾 Ventoy (D:)  ← your USB</span><span class="mbtn">💻 This PC (C:)</span></div>',
+     do:'⚠ In the <b>Browse For Folder</b> box, select <b>your USB drive</b> (the example shows <code>Ventoy (D:)</code> — yours may differ). <b>Never</b> pick your internal <code>C:</code> drive. Click <b>OK</b>.'},
+    {ttl:"Administrator: Medicat Installer [INSTALL]",
+     screen:'COULD NOT FIND THE MEDICAT FILE(S).\n(EITHER *.001 or the main .7z)\n\nWOULD YOU LIKE TO DOWNLOAD THEM?\n'+
+            '<div class="mock-btns"><span class="mbtn green sel">YES</span><span class="mbtn red">NO</span></div>',
+     do:'Expected on a fresh build — the image isn\'t on the drive yet. Click <b>YES</b> to download it.'},
+    {ttl:"Administrator: Medicat Installer [INSTALL]",
+     screen:'HOW WOULD YOU LIKE TO GRAB THE FILES?\n\nFASTER            DIRECT\n'+
+            '<div class="mock-btns"><span class="mbtn">TORRENT</span><span class="mbtn green sel">CDN</span></div>',
+     do:'Choose <b>CDN</b> (direct download). Avoid <b>Torrent</b> — it\'s unreliable on the school network.'},
+    {ttl:"Downloading … (this takes a while)",
+     screen:'Downloading from the direct CDN …\n<span style="color:#8b97a8">[#########.................] large file, be patient</span>\n\n'+
+            '<span style="color:#ffbd2e">If the title bar changes to “Select Administrator” and pauses → press ENTER.</span>',
+     do:'Let the big download run. If it <b>pauses</b> and the title shows <b>“Select Administrator”</b>, press <b>ENTER</b>. Choose your <b>Ventoy partition</b> if asked. When it finishes, Medicat is installed alongside your other tools. ✅'}
+  ];
+
+  var mBody = document.getElementById("mBody");
+  var mTitle = document.getElementById("mTitle");
+  var mDo = document.getElementById("mDo");
+  var mDots = document.getElementById("mDots");
+  var mCounter = document.getElementById("mCounter");
+  var mPrev = document.getElementById("mPrev");
+  var mNext = document.getElementById("mNext");
+  var mi = 0;
+
+  MEDICAT_STEPS.forEach(function(_, i){
+    var d = document.createElement("div");
+    d.className = "wf-dot"; d.textContent = i + 1; d.dataset.i = i;
+    mDots.appendChild(d);
+  });
+  var dots = mDots.querySelectorAll(".wf-dot");
+
+  function renderMedicat(){
+    var s = MEDICAT_STEPS[mi];
+    mTitle.textContent = s.ttl;
+    mBody.innerHTML = s.screen.replace(/\n/g, "<br>");
+    mDo.innerHTML = s.do;
+    mCounter.textContent = "Screen " + (mi + 1) + " of " + MEDICAT_STEPS.length;
+    dots.forEach(function(d, i){ d.classList.toggle("active", i === mi); });
+    mPrev.disabled = mi === 0;
+    mNext.disabled = mi === MEDICAT_STEPS.length - 1;
+  }
+  mPrev.addEventListener("click", function(){ if(mi > 0){ mi--; renderMedicat(); } });
+  mNext.addEventListener("click", function(){ if(mi < MEDICAT_STEPS.length - 1){ mi++; renderMedicat(); } });
+  mDots.addEventListener("click", function(e){
+    var d = e.target.closest(".wf-dot"); if(d){ mi = +d.dataset.i; renderMedicat(); }
+  });
+  renderMedicat();
+
+  /* ================================================================
+     EDIT-ME DATA #2 · build tracker
+       req:true marks the core required steps.
+     ================================================================ */
+  var TASKS = [
+    {id:"gather", name:"Download all installers", sub:"YUMI exFAT, PortableApps, Medicat, netboot.xyz, Clonezilla, Kali ISO", req:true},
+    {id:"yumi",   name:"YUMI exFAT — drive prepared + Kali added", sub:"Step 1 · formats the drive (expected, first run only)", req:true},
+    {id:"apps",   name:"PortableApps — installed to the USB", sub:"Step 2 · set install location to the thumb drive", req:true},
+    {id:"netboot",name:"netboot.xyz — added", sub:"Step 3 · needs self-hosted files to be useful", req:false},
+    {id:"medicat",name:"Medicat — installed (format = No!)", sub:"Step 4 · CDN download, pick the USB not C:", req:true},
+    {id:"clone",  name:"Clonezilla — added", sub:"Step 5 · disk imaging / ghosting", req:false},
+    {id:"verify", name:"Verify it boots", sub:"Reboot and confirm the USB boot menu appears", req:true}
+  ];
+
+  var LS_KEY = "tpc-thumbdrive";
+  var done = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+  var taskList = document.getElementById("taskList");
+  var fill = document.getElementById("trackFill");
+  var count = document.getElementById("trackCount");
+
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(done)); }
+  function update(){
+    var total = TASKS.length, n = 0;
+    TASKS.forEach(function(t){ if(done[t.id]) n++; });
+    fill.style.width = (total ? n/total*100 : 0) + "%";
+    count.textContent = n + " / " + total;
+  }
+  function render(){
+    taskList.innerHTML = "";
+    TASKS.forEach(function(t){
+      var isDone = !!done[t.id];
+      var row = document.createElement("div");
+      row.className = "task-row" + (isDone ? " done" : "");
+      row.innerHTML =
+        '<label><input type="checkbox" '+(isDone?"checked":"")+' data-id="'+t.id+'">'+
+          '<span><span class="task-name">'+t.name+'</span> '+
+          (t.req?'<span class="pill req">Required</span>':'')+
+          '<br><span class="task-sub">'+t.sub+'</span></span></label>';
+      taskList.appendChild(row);
+    });
+    update();
+  }
+  taskList.addEventListener("change", function(e){
+    var cb = e.target.closest("input[type=checkbox]"); if(!cb) return;
+    if(cb.checked){ done[cb.dataset.id] = true; } else { delete done[cb.dataset.id]; }
+    save();
+    cb.closest(".task-row").classList.toggle("done", cb.checked);
+    update();
+  });
+  document.getElementById("trackReset").addEventListener("click", function(){
+    if(confirm("Clear all build progress on this browser?")){ done = {}; save(); render(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

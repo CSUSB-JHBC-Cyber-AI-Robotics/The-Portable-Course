@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Vulhub Guide — what it is, how to navigate it, tips, and a lab tracker. The Portable Course.">
+<title>Vulhub Guide · The Portable Course</title>
+
+<!-- ============================================================================
+     THE PORTABLE COURSE  ·  Module 02 — Vulhub Guide
+     Inherits Template v1.0 (see Phases-of-Pen-Testing.html).
+     ----------------------------------------------------------------------------
+     FILE MAP (edits stay simple):
+       1. DESIGN SYSTEM  — shared course variables in :root (same look as Module 01)
+                           + a few Vulhub-only extras (terminal, tracker, news cards).
+       2. COMPONENTS     — reusable card / tab / accordion / terminal styles.
+       3. CONTENT (body) — plain semantic HTML; edit the words directly.
+       4. SCRIPT         — vanilla JS, one block per feature. The LABS array (tracker)
+                           and STEPS array (workflow) are EDIT-ME data.
+     No build step, no dependencies. Tracker progress saves in the browser.
+     ========================================================================= -->
+
+<style>
+/* ======================================================================
+   1. DESIGN SYSTEM  ·  shared across every Portable Course file
+   ====================================================================== */
+:root{
+  --bg:        #f5f7fb;
+  --surface:   #ffffff;
+  --surface-2: #eef2f8;
+  --text:      #1b2333;
+  --muted:     #5a6678;
+  --border:    #dde3ec;
+  --shadow:    0 1px 2px rgba(20,30,55,.06), 0 8px 24px rgba(20,30,55,.06);
+
+  --primary:   #2f5bdc;
+  --primary-ink:#1c3aa0;
+  --primary-wash:#e9eefc;
+  --accent2:   #2496ed;            /* Docker blue — playful highlight */
+  --red:   #e02436;                /* red-team identity accent */
+  --green: #0c9b73;                /* terminal / console accent */
+
+  /* difficulty / status colours */
+  --easy:#1f9d56; --med:#d98324; --hard:#d23f54;
+  --ok:#1f9d56;  --warn:#d98324;  --danger:#d23f54;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --maxw: 980px;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --gap: 22px;
+}
+[data-theme="dark"]{
+  --bg:#0a0e15; --surface:#0f1420; --surface-2:#161e2d;
+  --text:#cdd6e5; --muted:#74839a; --border:#1d2636;
+  --shadow:0 0 0 1px rgba(255,62,77,.05), 0 14px 40px rgba(0,0,0,.55);
+  --primary:#54a6ff; --primary-ink:#a9cdff; --primary-wash:#0e1f34; --accent2:#4aa9f0;
+  --red:#ff3e4d; --green:#36d8a6;
+  --hard:#ff5168;
+}
+
+/* ======================================================================
+   2. BASE + COMPONENTS  (identical to Module 01 so the course feels as one)
+   ====================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+h1,h2,h3,h4{line-height:1.25; font-weight:700; margin:1.6em 0 .5em}
+h2{font-size:1.7rem; scroll-margin-top:84px}
+h3{font-size:1.25rem}
+p{margin:.7em 0}
+a{color:var(--primary); text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono); font-size:.92em; background:var(--surface-2); padding:.12em .4em; border-radius:6px}
+small{color:var(--muted)}
+hr{border:0; border-top:1px solid var(--border); margin:2.4em 0}
+
+#progress{position:fixed; top:0; left:0; height:3px; width:0;
+  background:linear-gradient(90deg,var(--accent2),var(--primary),var(--hard));
+  z-index:60; transition:width .1s linear}
+
+header.topbar{position:sticky; top:0; z-index:50; background:var(--surface);
+  border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex; align-items:center; gap:18px; height:60px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; white-space:nowrap}
+.brand small{display:block; font-weight:500; font-size:.7rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); line-height:1}
+.nav{display:flex; gap:4px; margin-left:auto; overflow:auto}
+.nav a{color:var(--muted); padding:7px 11px; border-radius:8px; font-size:.86rem; font-weight:600; white-space:nowrap}
+.nav a:hover{background:var(--surface-2); text-decoration:none}
+.nav a.active{color:var(--primary); background:var(--primary-wash)}
+.icon-btn{border:1px solid var(--border); background:var(--surface); color:var(--text);
+  width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.05rem; display:grid; place-items:center}
+.icon-btn:hover{background:var(--surface-2)}
+
+.hero{padding:54px 0 10px; text-align:center}
+.hero .kicker{display:inline-block; background:var(--primary-wash); color:var(--primary-ink);
+  font-weight:700; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; padding:6px 13px; border-radius:999px}
+.hero h1{font-size:2.7rem; margin:.35em 0 .15em; letter-spacing:-.02em}
+.hero p.lead{font-size:1.18rem; color:var(--muted); max-width:660px; margin:.4em auto 0}
+.meta-row{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:22px}
+.chip{background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  padding:6px 14px; font-size:.85rem; font-weight:600; box-shadow:var(--shadow)}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow); margin:var(--gap) 0}
+.grid{display:grid; gap:var(--gap)}
+@media(min-width:720px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
+
+.note{border-left:4px solid var(--primary); background:var(--primary-wash);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 18px; margin:var(--gap) 0}
+.note.warn{border-color:var(--warn); background:#fdeeda}
+.note.danger{border-color:var(--danger); background:#fce4ee}
+.note.ok{border-color:var(--ok); background:#e6f6ec}
+[data-theme="dark"] .note.warn{background:#33260f}
+[data-theme="dark"] .note.danger{background:#321626}
+[data-theme="dark"] .note.ok{background:#10251a}
+.note b{display:block; margin-bottom:2px}
+
+.snippet{position:relative; background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:14px 16px; margin:14px 0; overflow:auto}
+.snippet pre{margin:0; font-family:var(--mono); font-size:.9rem; white-space:pre}
+.copy-btn{position:absolute; top:8px; right:8px; font-size:.72rem; font-weight:700;
+  border:1px solid var(--border); background:var(--surface); color:var(--muted); border-radius:7px; padding:4px 9px; cursor:pointer}
+.copy-btn:hover{color:var(--primary); border-color:var(--primary)}
+
+.term{border-bottom:2px dotted var(--primary); cursor:help; position:relative}
+.term:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:150%;
+  transform:translateX(-50%); width:max-content; max-width:260px; background:var(--text); color:var(--bg);
+  font-size:.82rem; line-height:1.4; font-weight:500; text-align:left; padding:9px 12px;
+  border-radius:9px; box-shadow:var(--shadow); z-index:40; white-space:normal}
+.term:hover::before{content:""; position:absolute; left:50%; bottom:150%;
+  transform:translate(-50%,90%); border:6px solid transparent; border-top-color:var(--text); z-index:40}
+
+.tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
+.tab{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  padding:8px 15px; border-radius:999px; font-weight:700; font-size:.88rem; cursor:pointer}
+.tab.active{background:var(--primary); color:#fff; border-color:var(--primary)}
+.tabpanel{display:none} .tabpanel.active{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(4px)}to{opacity:1}}
+
+.acc{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin:12px 0}
+.acc-head{width:100%; text-align:left; background:var(--surface); border:0; cursor:pointer;
+  padding:15px 18px; font-weight:700; font-size:1rem; color:var(--text); display:flex; align-items:center; gap:12px}
+.acc-head:hover{background:var(--surface-2)}
+.acc-head .caret{margin-left:auto; transition:transform .25s; color:var(--muted)}
+.acc.open .acc-head .caret{transform:rotate(90deg)}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .3s ease}
+.acc-body .inner{padding:4px 18px 18px}
+
+table{width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--surface-2); font-weight:700}
+
+.res{display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; padding:12px 0; border-bottom:1px solid var(--border)}
+.res b{flex:1 1 240px}
+.res .fill{color:var(--warn); font-weight:700; font-family:var(--mono); font-size:.85rem}
+
+footer{margin:60px 0 40px; color:var(--muted); font-size:.9rem; text-align:center}
+section{padding-top:8px}
+.section-tag{font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary)}
+
+/* ---- Vulhub-only: TERMINAL block + interactive workflow ---- */
+.terminal{background:#0d1117; border:1px solid #232c3d; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin:6px 0}
+.term-bar{display:flex; align-items:center; gap:7px; padding:10px 14px; background:#161d2e; border-bottom:1px solid #232c3d}
+.term-bar .dot{width:11px; height:11px; border-radius:50%}
+.term-bar .dot.r{background:#ff5f56}.term-bar .dot.y{background:#ffbd2e}.term-bar .dot.g{background:#27c93f}
+.term-bar .ttl{margin-left:8px; color:#8b97a8; font-family:var(--mono); font-size:.78rem}
+.term-body{padding:16px 18px; font-family:var(--mono); font-size:.9rem; line-height:1.7;
+  color:#cdd6e4; white-space:pre-wrap; min-height:120px}
+.term-body .pr{color:#27c93f}      /* prompt $ */
+.term-body .cm{color:#79c0ff}      /* command  */
+.term-body .ot{color:#8b97a8}      /* output   */
+.term-body .hl{color:#ffbd2e}
+.wf-steps{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 14px}
+@media(max-width:680px){ .wf-steps{grid-template-columns:1fr 1fr} }
+.wf-step{cursor:pointer; border:1px solid var(--border); background:var(--surface);
+  border-radius:var(--radius-sm); padding:12px 10px; text-align:center; font-weight:700; font-size:.86rem;
+  transition:transform .15s}
+.wf-step:hover{transform:translateY(-3px)}
+.wf-step.active{background:var(--accent2); color:#fff; border-color:var(--accent2)}
+.wf-step .n{display:block; font-size:.72rem; opacity:.7}
+
+/* ---- Vulhub-only: real-world breach cards ---- */
+.news-grid{display:grid; gap:16px}
+@media(min-width:720px){ .news-grid{grid-template-columns:1fr 1fr} }
+.news{position:relative; border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--surface); padding:18px 20px; box-shadow:var(--shadow); overflow:hidden;
+  transition:transform .15s, box-shadow .15s}
+.news:hover{transform:translateY(-4px); box-shadow:0 12px 32px rgba(20,30,55,.16)}
+.news::before{content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--hard)}
+.news .yr{display:inline-block; background:var(--surface-2); color:var(--muted); font-weight:800;
+  font-size:.74rem; padding:3px 10px; border-radius:999px; letter-spacing:.04em}
+.news h3{margin:.4em 0 .2em; font-size:1.12rem}
+.news .cve{font-family:var(--mono); font-size:.8rem; color:var(--danger); font-weight:700}
+.news .lab{margin-top:10px; font-size:.84rem; color:var(--muted)}
+.news .lab code{background:var(--primary-wash); color:var(--primary-ink)}
+
+/* ---- Vulhub-only: assignment tracker ---- */
+.tracker-top{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:8px}
+.progress-wrap{flex:1 1 220px; background:var(--surface-2); border-radius:999px; height:14px; overflow:hidden}
+.progress-fill{height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--easy));
+  transition:width .35s ease}
+.tracker-count{font-weight:800; font-size:.95rem; white-space:nowrap}
+.tracker-filters{display:flex; gap:6px; flex-wrap:wrap}
+.tracker-filters .tab{font-size:.82rem; padding:6px 13px}
+.lab-row{display:flex; align-items:center; gap:14px; padding:13px 4px; border-bottom:1px solid var(--border)}
+.lab-row label{display:flex; align-items:center; gap:13px; cursor:pointer; flex:1; min-width:0}
+.lab-row input{width:20px; height:20px; accent-color:var(--easy); flex:none; cursor:pointer}
+.lab-meta{min-width:0}
+.lab-name{font-weight:700}
+.lab-row.done .lab-name{text-decoration:line-through; color:var(--muted)}
+.lab-path{font-family:var(--mono); font-size:.78rem; color:var(--muted)}
+.lab-tags{display:flex; gap:6px; flex-wrap:wrap; flex:none}
+.pill{font-size:.72rem; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap}
+.pill.cat{background:var(--surface-2); color:var(--muted)}
+.pill.req{background:var(--primary-wash); color:var(--primary-ink)}
+.diff{font-size:.8rem; letter-spacing:1px; white-space:nowrap}
+.diff.d1{color:var(--easy)} .diff.d2{color:var(--med)} .diff.d3{color:var(--hard)}
+.reset-btn{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  border-radius:8px; padding:7px 13px; font-weight:700; font-size:.82rem; cursor:pointer}
+.reset-btn:hover{color:var(--danger); border-color:var(--danger)}
+
+/* ======================================================================
+   TERMINAL / RED-TEAM THEME LAYER  ·  shared flourishes (all CSS, no deps)
+   Re-tint the whole course by editing --red / --green in the palette above.
+   ====================================================================== */
+body{
+  background-image:
+    linear-gradient(rgba(120,140,170,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,140,170,.05) 1px, transparent 1px);
+  background-size:42px 42px;
+}
+.brand{font-family:var(--mono)}
+.brand svg{filter:drop-shadow(0 0 5px rgba(255,62,77,.55))}
+.brand small{color:var(--red)}
+.nav a{font-family:var(--mono); font-size:.8rem; letter-spacing:-.01em}
+.section-tag{font-family:var(--mono); color:var(--red)}
+.section-tag::before{content:"// "; color:var(--green)}
+h2{font-family:var(--mono); letter-spacing:-.01em}
+h2::before{content:"$ "; color:var(--green)}
+.hero .kicker{font-family:var(--mono); background:transparent; border:1px solid var(--border); color:var(--green)}
+.hero .kicker::before{content:"~$ "; color:var(--muted)}
+.hero h1{font-family:var(--mono); font-size:2.25rem; line-height:1.15; letter-spacing:-.02em}
+.hero h1::after{content:"\2587"; color:var(--green); margin-left:5px; animation:cursor 1.1s steps(1) infinite}
+@keyframes cursor{50%{opacity:0}}
+.chip{font-family:var(--mono); font-size:.8rem}
+.copy-btn{font-family:var(--mono)}
+.snippet{border-left:3px solid var(--green)}
+#progress{background:linear-gradient(90deg, var(--red), var(--green))}
+.tab.active{box-shadow:0 0 16px -3px var(--primary)}
+.card{position:relative}
+.card::before{content:""; position:absolute; left:-1px; right:-1px; top:-1px; height:2px;
+  background:linear-gradient(90deg, var(--red), transparent 55%);
+  border-radius:var(--radius) var(--radius) 0 0}
+
+/* extra console flourishes — scanlines, hover glow, hero command prompt */
+body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55;
+  background:repeating-linear-gradient(0deg, rgba(127,150,180,.05) 0 1px, transparent 1px 3px)}
+.topbar{box-shadow:0 1px 0 rgba(255,62,77,.18)}
+.tab:hover, .acc-head:hover, .wf-step:hover{box-shadow:0 0 20px -7px var(--green)}
+.icon-btn:hover{border-color:var(--red); box-shadow:0 0 16px -5px var(--red)}
+.card:hover{box-shadow:0 0 0 1px rgba(255,62,77,.30), var(--shadow)}
+.news:hover{box-shadow:0 0 0 1px var(--red), 0 12px 30px rgba(0,0,0,.4)}
+.hero h1::after{content:""; animation:none; margin:0}
+.cmdline{font-family:var(--mono); color:var(--muted); font-size:.9rem; margin:16px 0 0; word-break:break-word}
+.cmdline b{color:var(--green); font-weight:600}
+.cmdline i{color:var(--red); font-style:normal}
+.cmdline::after{content:" \2587"; color:var(--green); animation:cursor 1.1s steps(1) infinite}
+</style>
+</head>
+
+<body>
+<div id="progress"></div>
+
+<!-- ============================================================  TOP NAV  ============================================================ -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="7" y="2.5" width="10" height="15" rx="2.2" fill="var(--primary)"/>
+        <rect x="9.4" y="5" width="5.2" height="2" rx="1" fill="#fff"/>
+        <rect x="10" y="17.5" width="4" height="4" rx="1" fill="var(--primary-ink)"/>
+      </svg>
+      <span>Portable Course<small>Vulhub Guide</small></span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#start">Start</a>
+      <a href="#what">What is it</a>
+      <a href="#setup">Setup</a>
+      <a href="#navigate">Navigate</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#tips">Tips</a>
+      <a href="#realworld">Real hacks</a>
+      <a href="#tracker">Tracker</a>
+      <a href="#help">Troubleshoot</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<!-- ============================================================  HERO  ============================================================ -->
+<div class="wrap">
+  <div class="hero" id="start">
+    <span class="kicker">The Portable Course · Module 02</span>
+    <h1>Vulhub: a hacking lab in a box 🐳</h1>
+    <p class="lead">Spin up a deliberately vulnerable app with one command, exploit a
+      <em>real</em> CVE, then tear it down. Vulhub turns famous breaches into safe practice.</p>
+    <p class="cmdline"><b>root@portable-course</b>:<i>~/module-02</i>$ docker compose up vulhub --detach</p>
+    <div class="meta-row">
+      <span class="chip">⏱ ~15 min read</span>
+      <span class="chip">🐳 Powered by Docker</span>
+      <span class="chip">✅ Built-in lab tracker</span>
+      <span class="chip">🧪 Isolated lab use only</span>
+    </div>
+  </div>
+
+  <div class="note danger">
+    <b>🔒 These containers are intentionally broken — keep them off the open internet.</b>
+    Run Vulhub only inside an <strong>isolated lab VM or local network</strong> you control
+    (e.g. your Proxmox VM). Never expose a running environment to the internet or a campus
+    network — you'd be hosting a live, exploitable target. Pair this with the
+    <a href="Phases-of-Pen-Testing.html#ethics">authorization rules from Module 01</a>.
+  </div>
+</div>
+
+<!-- ============================================================  WHAT IS IT  ============================================================ -->
+<div class="wrap">
+<section id="what">
+  <span class="section-tag">Orientation</span>
+  <h2>What is Vulhub?</h2>
+  <p><a href="https://vulhub.org/" target="_blank" rel="noopener">Vulhub</a> is a free, open-source
+     collection of <strong>pre-built vulnerable environments</strong>. Each one is a real piece of
+     software (Apache, Struts, Log4j, WebLogic…) packaged with a known
+     <span class="term" data-tip="Common Vulnerabilities and Exposures — a unique ID for a publicly known security flaw.">CVE</span>
+     so you can practice exploiting it safely and reproducibly. No hunting for old installers, no
+     fragile setup — just <code>docker compose up</code> and the vulnerable target is live.</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h3>🧱 Pre-built &amp; reproducible</h3>
+      <p>Every environment is a <span class="term" data-tip="A lightweight, isolated package that bundles an app and everything it needs to run.">Docker</span>
+         image with the exact vulnerable versions baked in. It works the same on every machine.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 Maps to real CVEs</h3>
+      <p>Folders are named after the flaw they contain. You're not practicing toy bugs — these are
+         the same vulnerabilities behind real-world breaches.</p>
+    </div>
+    <div class="card">
+      <h3>📖 Self-documenting</h3>
+      <p>Each environment ships a <code>README</code> explaining the vulnerability and how to
+         reproduce it, with links to the original research.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Where it fits the bigger picture.</b> Vulhub is your sandbox for
+    <a href="Phases-of-Pen-Testing.html#phase-3">Phase 3 — Gaining Access</a> from Module 01.
+    You practice the <em>exploitation</em> step against a safe copy of a real target before you'd
+    ever do it on an authorized engagement.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  SETUP  ============================================================ -->
+<div class="wrap">
+<section id="setup">
+  <span class="section-tag">Get ready</span>
+  <h2>Setup — you only need Docker</h2>
+  <p>Vulhub itself isn't "installed." You just need <strong>Docker</strong> and <strong>Docker
+     Compose</strong>, then you grab the Vulhub files. Pick your OS:</p>
+
+  <div class="card">
+    <div class="tabs" data-tabs="os">
+      <button class="tab active" data-tab="linux">🐧 Linux (recommended)</button>
+      <button class="tab" data-tab="win">🪟 Windows</button>
+      <button class="tab" data-tab="mac">🍎 macOS</button>
+    </div>
+
+    <div class="tabpanel active" data-panel="linux">
+      <p>The native home for Docker — best performance and fewest surprises. On your lab VM:</p>
+      <div class="snippet"><button class="copy-btn">Copy</button><pre>
+# Install Docker Engine + Compose plugin (Debian/Ubuntu)
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER      # log out/in so you can run docker without sudo
+
+# Grab Vulhub
+git clone https://github.com/vulhub/vulhub.git
+cd vulhub</pre></div>
+    </div>
+
+    <div class="tabpanel" data-panel="win">
+      <p>Install <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">Docker
+         Desktop</a> with the WSL2 backend. Then clone Vulhub inside your WSL2 Linux distro for best results.</p>
+      <div class="snippet"><button class="copy-btn">Copy</button><pre>
+# In PowerShell: enable WSL2, then install Docker Desktop (WSL2 backend)
+wsl --install
+
+# Inside your WSL2 distro:
+git clone https://github.com/vulhub/vulhub.git
+cd vulhub</pre></div>
+      <div class="note warn"><b>Course note.</b> If you're doing this on a Proxmox VM off campus,
+        connect the VPN first — see the Computer Skills guide.</div>
+    </div>
+
+    <div class="tabpanel" data-panel="mac">
+      <p>Install <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">Docker
+         Desktop for Mac</a> (Apple Silicon or Intel), then clone Vulhub.</p>
+      <div class="snippet"><button class="copy-btn">Copy</button><pre>
+# After installing Docker Desktop:
+git clone https://github.com/vulhub/vulhub.git
+cd vulhub</pre></div>
+      <div class="note warn"><b>Heads-up (Apple Silicon).</b> A few older images are x86-only and may
+        run under emulation or not at all. Most environments are fine.</div>
+    </div>
+  </div>
+
+  <p>Confirm Docker is alive before you start:</p>
+  <div class="snippet"><button class="copy-btn">Copy</button><pre>docker --version &amp;&amp; docker compose version</pre></div>
+</section>
+</div>
+
+<!-- ============================================================  NAVIGATE  ============================================================ -->
+<div class="wrap">
+<section id="navigate">
+  <span class="section-tag">Find your way</span>
+  <h2>How to navigate Vulhub</h2>
+  <p>The layout is simple once you see the pattern. Everything is organized
+     <strong>by software, then by CVE</strong>:</p>
+
+  <div class="snippet"><button class="copy-btn">Copy</button><pre>
+vulhub/
+├── log4j/
+│   └── CVE-2021-44228/      ← one environment = one vulnerability
+│       ├── docker-compose.yml    the lab definition
+│       └── README.md             what it is + how to exploit it
+├── struts2/
+│   └── s2-045/              (CVE-2017-5638 — the Equifax bug)
+├── weblogic/
+│   └── CVE-2019-2725/
+└── ...                       hundreds more, grouped by product</pre></div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>🗂️ The folder name <em>is</em> the lesson</h3>
+      <p>A path like <code>log4j/CVE-2021-44228</code> tells you the product and the exact flaw.
+         Search the <a href="https://github.com/vulhub/vulhub" target="_blank" rel="noopener">repo</a>
+         or browse <a href="https://vulhub.org/" target="_blank" rel="noopener">vulhub.org</a> by name.</p>
+    </div>
+    <div class="card">
+      <h3>📖 Always read the README first</h3>
+      <p>Each environment's <code>README.md</code> explains the vulnerability, the affected
+         versions, the exact reproduction steps, and links to the original write-up. It's your
+         walkthrough — don't skip it.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  WORKFLOW (interactive terminal)  ============================================================ -->
+<div class="wrap">
+<section id="workflow">
+  <span class="section-tag">The loop · click</span>
+  <h2>The universal workflow</h2>
+  <p>Every single environment follows the <strong>same four steps</strong>. Click each step to
+     watch what happens in the terminal.</p>
+
+  <div class="card">
+    <div class="wf-steps" id="wfSteps">
+      <div class="wf-step active" data-step="0"><span class="n">STEP 1</span>Enter</div>
+      <div class="wf-step" data-step="1"><span class="n">STEP 2</span>Launch</div>
+      <div class="wf-step" data-step="2"><span class="n">STEP 3</span>Exploit</div>
+      <div class="wf-step" data-step="3"><span class="n">STEP 4</span>Tear down</div>
+    </div>
+    <div class="terminal">
+      <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="ttl" id="wfTitle">~/vulhub</span></div>
+      <div class="term-body" id="wfBody"></div>
+    </div>
+    <p id="wfNote" style="color:var(--muted); font-size:.92rem; margin-bottom:0"></p>
+  </div>
+
+  <div class="note ok">
+    <b>The golden rule:</b> always finish with <code>docker compose down</code>. It frees memory,
+    removes the vulnerable container, and resets state so the next lab starts clean.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  TIPS  ============================================================ -->
+<div class="wrap">
+<section id="tips">
+  <span class="section-tag">Pro moves</span>
+  <h2>Tips &amp; tricks</h2>
+  <p>Small habits that save hours. Click to expand.</p>
+
+  <div class="acc">
+    <button class="acc-head">🛟 Snapshot your VM before you start <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Take a VM snapshot before a session. If an exploit
+      makes a mess or a container won't clean up, you roll back in seconds instead of rebuilding.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">👀 Know what's running with <code>docker ps</code> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p>Forgot which lab is up, or which port it's on? <code>docker ps</code> lists running
+         containers and their port mappings.</p>
+      <div class="snippet"><button class="copy-btn">Copy</button><pre>docker ps                 # what's running + ports
+docker compose logs -f    # live logs for the current environment</pre></div>
+    </div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">🧹 Reclaim disk space regularly <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p>Images add up fast. When a lab is done and torn down, prune what you no longer need.</p>
+      <div class="snippet"><button class="copy-btn">Copy</button><pre>docker system df          # see what's using space
+docker system prune       # remove stopped containers + dangling images</pre></div>
+    </div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">🔗 Tie every lab back to a phase <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>As you exploit, ask: which
+      <a href="Phases-of-Pen-Testing.html#phases">pentest phase</a> is this? Mapping each lab to
+      Recon → Scan → Access cements the methodology, not just the one trick.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">📝 Take notes like it's a real engagement <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Screenshot your proof, jot the command that worked
+      and the CVE. You're building the reporting muscle from
+      <a href="Phases-of-Pen-Testing.html#phase-5">Phase 5</a> — and great notes for the exam.</p></div></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  REAL-WORLD HACKS  ============================================================ -->
+<div class="wrap">
+<section id="realworld">
+  <span class="section-tag">Why it matters</span>
+  <h2>Real breaches you'll practice on</h2>
+  <p>These aren't academic toys. Each card below is a vulnerability that caused a real-world
+     incident — and a Vulhub environment lets you safely recreate it. Hover a card to lift it.</p>
+
+  <div class="news-grid">
+    <div class="news">
+      <span class="yr">Dec 2021</span>
+      <h3>Log4Shell — the internet's worst week</h3>
+      <span class="cve">CVE-2021-44228 · Apache Log4j</span>
+      <p>A single crafted string in a log message gave attackers remote code execution. Because
+         Log4j is buried in countless Java apps, it triggered a global, frantic patching scramble.</p>
+      <p class="lab">🐳 Practice it: <code>log4j/CVE-2021-44228</code></p>
+    </div>
+
+    <div class="news">
+      <span class="yr">2017</span>
+      <h3>Apache Struts → the Equifax breach</h3>
+      <span class="cve">CVE-2017-5638 · Struts2 (s2-045)</span>
+      <p>An unpatched Struts flaw let attackers run commands on Equifax servers, exposing personal
+         data on ~147 million people — one of the most consequential breaches ever.</p>
+      <p class="lab">🐳 Practice it: <code>struts2/s2-045</code></p>
+    </div>
+
+    <div class="news">
+      <span class="yr">2022</span>
+      <h3>Spring4Shell</h3>
+      <span class="cve">CVE-2022-22965 · Spring Framework</span>
+      <p>A class-binding flaw in the hugely popular Spring framework allowed RCE on many Java web
+         apps, prompting another rapid round of emergency patching.</p>
+      <p class="lab">🐳 Practice it: <code>spring/CVE-2022-22965</code></p>
+    </div>
+
+    <div class="news">
+      <span class="yr">2022</span>
+      <h3>Confluence OGNL injection</h3>
+      <span class="cve">CVE-2022-26134 · Atlassian Confluence</span>
+      <p>Actively exploited as a zero-day, this let attackers run code on Confluence servers
+         worldwide before a fix existed — a classic "patch now" emergency.</p>
+      <p class="lab">🐳 Practice it: <code>confluence/CVE-2022-26134</code></p>
+    </div>
+
+    <div class="news">
+      <span class="yr">2018</span>
+      <h3>Drupalgeddon2</h3>
+      <span class="cve">CVE-2018-7600 · Drupal</span>
+      <p>A pre-auth RCE in the Drupal CMS was mass-exploited within days of disclosure to plant
+         cryptominers and backdoors across thousands of sites.</p>
+      <p class="lab">🐳 Practice it: <code>drupal/CVE-2018-7600</code></p>
+    </div>
+
+    <div class="news">
+      <span class="yr">2014</span>
+      <h3>Shellshock</h3>
+      <span class="cve">CVE-2014-6271 · GNU Bash</span>
+      <p>A decades-old Bash parsing bug let attackers execute commands via web requests, CGI
+         scripts and more — devastating because Bash is everywhere on Unix systems.</p>
+      <p class="lab">🐳 Practice it: <code>base/CVE-2014-6271</code></p>
+    </div>
+  </div>
+
+  <p><small>CVE IDs link to the canonical record at
+     <a href="https://nvd.nist.gov/" target="_blank" rel="noopener">NIST's National Vulnerability Database</a>.
+     Confirm the exact Vulhub path in the repo — folder names occasionally change.</small></p>
+</section>
+</div>
+
+<!-- ============================================================
+     ASSIGNMENT TRACKER  (persists in localStorage)
+     EDIT the LABS array in the script to set the class's assigned labs.
+     ============================================================ -->
+<div class="wrap">
+<section id="tracker">
+  <span class="section-tag">Your progress · saved</span>
+  <h2>Lab assignment tracker</h2>
+  <p>Check off each lab as you complete it. Your progress is saved in this browser automatically —
+     close the tab and it's still here when you come back. <span class="pill req">Required</span>
+     marks the labs assigned for the class.</p>
+
+  <div class="card">
+    <div class="tracker-top">
+      <div class="progress-wrap"><div class="progress-fill" id="trackFill"></div></div>
+      <span class="tracker-count" id="trackCount">0 / 0</span>
+      <button class="reset-btn" id="trackReset">↻ Reset</button>
+    </div>
+    <div class="tracker-filters tabs" data-track-filter>
+      <button class="tab active" data-filter="all">All</button>
+      <button class="tab" data-filter="todo">To-do</button>
+      <button class="tab" data-filter="done">Done</button>
+      <button class="tab" data-filter="req">Required</button>
+    </div>
+    <div id="labList"><!-- rows built by script --></div>
+  </div>
+
+  <div class="note">
+    <b>Instructor:</b> the assigned lab list lives in the <code>LABS</code> array near the bottom of
+    this file. Add a lab, change a difficulty, or flip <code>req</code> to true/false in one line —
+    no other edits needed.
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  TROUBLESHOOT  ============================================================ -->
+<div class="wrap">
+<section id="help">
+  <span class="section-tag">When it breaks</span>
+  <h2>Troubleshooting</h2>
+
+  <div class="acc">
+    <button class="acc-head">"Port is already allocated" <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Another container (or app) is using that port. Tear
+      down the previous lab with <code>docker compose down</code>, or run <code>docker ps</code> to
+      find and stop the conflicting container.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">"Cannot connect to the Docker daemon" <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Docker isn't running (start Docker Desktop / the
+      service) or your user isn't in the <code>docker</code> group. On Linux:
+      <code>sudo usermod -aG docker $USER</code>, then log out and back in.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">The page won't load at localhost <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Give the container a few seconds to finish booting,
+      then check the exact port with <code>docker ps</code> — it's listed in the README and may not
+      be the default. Check logs with <code>docker compose logs</code>.</p></div></div>
+  </div>
+  <div class="acc">
+    <button class="acc-head">An image won't pull or build <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner"><p>Check your internet/VPN, then retry. On Apple Silicon
+      some x86-only images need emulation. As a last resort, <code>docker compose pull</code> first,
+      then <code>up</code>.</p></div></div>
+  </div>
+</section>
+</div>
+
+<!-- ============================================================  RESOURCES  ============================================================ -->
+<div class="wrap">
+<section id="resources">
+  <span class="section-tag">Go deeper</span>
+  <h2>Resources &amp; links</h2>
+  <div class="card">
+    <h3>Official &amp; reference</h3>
+    <div class="res"><b>Vulhub — website</b><a href="https://vulhub.org/" target="_blank" rel="noopener">vulhub.org</a></div>
+    <div class="res"><b>Vulhub — GitHub repository</b><a href="https://github.com/vulhub/vulhub" target="_blank" rel="noopener">github.com/vulhub/vulhub</a></div>
+    <div class="res"><b>Docker — get started</b><a href="https://docs.docker.com/get-started/" target="_blank" rel="noopener">docs.docker.com</a></div>
+    <div class="res"><b>NIST National Vulnerability Database (CVE lookup)</b><a href="https://nvd.nist.gov/" target="_blank" rel="noopener">nvd.nist.gov</a></div>
+    <div class="res"><b>CISA Known Exploited Vulnerabilities catalog</b><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">cisa.gov</a></div>
+  </div>
+  <div class="card">
+    <h3>Course links — fill these in</h3>
+    <div class="res"><b>Curriculum GitHub repository</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Proxmox / VPN access (off-campus)</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Assigned Vulhub labs (instructor list)</b><span class="fill">[ add link ]</span></div>
+    <div class="res"><b>Where to submit lab proof / write-ups</b><span class="fill">[ add link ]</span></div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><strong>The Portable Course</strong> · Module 02 — Vulhub Guide · inherits Template v1.0</p>
+    <p>Isolated lab use only. Built to be edited: design system at the top, words in the body,
+       and the <code>LABS</code> / <code>STEPS</code> arrays in the script.</p>
+  </div>
+</footer>
+
+<!-- ============================================================  3. SCRIPT  ============================================================ -->
+<script>
+(function(){
+  "use strict";
+  var root = document.documentElement;
+
+  /* ---- Theme toggle (shared course key) -------------------------- */
+  var saved = localStorage.getItem("tpc-theme");
+  if(saved){ root.setAttribute("data-theme", saved); }
+  document.getElementById("themeBtn").addEventListener("click", function(){
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tpc-theme", next);
+  });
+
+  /* ---- Reading-progress bar -------------------------------------- */
+  var bar = document.getElementById("progress");
+  window.addEventListener("scroll", function(){
+    var h = document.documentElement;
+    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+  }, {passive:true});
+
+  /* ---- Tabs (OS setup) ------------------------------------------- */
+  document.querySelectorAll("[data-tabs]").forEach(function(group){
+    var tabs = group.querySelectorAll(".tab");
+    var panels = group.parentElement.querySelectorAll(".tabpanel");
+    tabs.forEach(function(tab){
+      tab.addEventListener("click", function(){
+        tabs.forEach(function(t){ t.classList.remove("active"); });
+        panels.forEach(function(p){ p.classList.remove("active"); });
+        tab.classList.add("active");
+        group.parentElement.querySelector('[data-panel="'+tab.dataset.tab+'"]').classList.add("active");
+      });
+    });
+  });
+
+  /* ---- Accordions ------------------------------------------------ */
+  document.querySelectorAll(".acc-head").forEach(function(head){
+    head.addEventListener("click", function(){
+      var acc = head.parentElement, body = acc.querySelector(".acc-body");
+      var open = acc.classList.toggle("open");
+      body.style.maxHeight = open ? body.scrollHeight + "px" : null;
+    });
+  });
+
+  /* ---- Copy buttons ---------------------------------------------- */
+  document.querySelectorAll(".copy-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var text = btn.parentElement.querySelector("pre").innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        var old = btn.textContent; btn.textContent = "Copied ✓";
+        setTimeout(function(){ btn.textContent = old; }, 1400);
+      });
+    });
+  });
+
+  /* ---- Active-section highlight in nav --------------------------- */
+  var navLinks = document.querySelectorAll("#nav a"), byId = {};
+  navLinks.forEach(function(a){ byId[a.getAttribute("href").slice(1)] = a; });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.remove("active"); });
+        var link = byId[en.target.id]; if(link){ link.classList.add("active"); }
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(s){ io.observe(s); });
+
+  /* ================================================================
+     EDIT-ME DATA #1 · the interactive workflow terminal
+     ================================================================ */
+  var STEPS = [
+    {title:"~/vulhub",
+     note:"Move into the environment folder. The path names the product and the CVE.",
+     html:'<span class="pr">$</span> <span class="cm">cd log4j/CVE-2021-44228</span>\n'+
+          '<span class="ot"># now you are inside one specific vulnerable environment</span>'},
+    {title:"~/vulhub/log4j/CVE-2021-44228",
+     note:"Build and start the vulnerable app in the background with one command.",
+     html:'<span class="pr">$</span> <span class="cm">docker compose up -d</span>\n'+
+          '<span class="ot">[+] Running 2/2\n'+
+          ' ✔ Network ...default  Created\n'+
+          ' ✔ Container ...solr-1  Started</span>\n'+
+          '<span class="hl"># target is now live on a local port — check the README</span>'},
+    {title:"~/vulhub/log4j/CVE-2021-44228",
+     note:"Follow the README to exploit the CVE, then capture proof for your notes.",
+     html:'<span class="pr">$</span> <span class="cm">docker ps</span>          <span class="ot"># confirm the port mapping</span>\n'+
+          '<span class="pr">$</span> <span class="ot"># ...follow the README\'s reproduction steps against localhost...</span>\n'+
+          '<span class="hl"># 🎯 access achieved — screenshot it for your write-up</span>'},
+    {title:"~/vulhub/log4j/CVE-2021-44228",
+     note:"ALWAYS tear it down: frees memory, removes the vulnerable container, resets state.",
+     html:'<span class="pr">$</span> <span class="cm">docker compose down</span>\n'+
+          '<span class="ot">[+] Running 2/2\n'+
+          ' ✔ Container ...solr-1  Removed\n'+
+          ' ✔ Network ...default  Removed</span>\n'+
+          '<span class="pr">$</span> <span class="ot"># clean. on to the next lab.</span>'}
+  ];
+  var wfBody = document.getElementById("wfBody");
+  var wfTitle = document.getElementById("wfTitle");
+  var wfNote = document.getElementById("wfNote");
+  var wfSteps = document.querySelectorAll(".wf-step");
+  function renderStep(i){
+    var s = STEPS[i];
+    wfTitle.textContent = s.title;
+    wfBody.innerHTML = s.html;
+    wfNote.textContent = s.note;
+    wfSteps.forEach(function(st){ st.classList.toggle("active", +st.dataset.step === i); });
+  }
+  document.getElementById("wfSteps").addEventListener("click", function(e){
+    var st = e.target.closest(".wf-step"); if(st){ renderStep(+st.dataset.step); }
+  });
+  renderStep(0);
+
+  /* ================================================================
+     EDIT-ME DATA #2 · the lab tracker
+       req  : true = assigned for the class (shows a Required badge)
+       diff : 1 easy · 2 medium · 3 hard  (renders as stars)
+     ================================================================ */
+  var LABS = [
+    {id:"log4shell",   name:"Log4Shell",        path:"log4j/CVE-2021-44228",   cat:"Java / RCE",      diff:3, req:true},
+    {id:"struts045",   name:"Struts2 (Equifax)",path:"struts2/s2-045",         cat:"Java / RCE",      diff:2, req:true},
+    {id:"shellshock",  name:"Shellshock",       path:"base/CVE-2014-6271",     cat:"Bash / RCE",      diff:1, req:true},
+    {id:"drupalgeddon",name:"Drupalgeddon2",    path:"drupal/CVE-2018-7600",   cat:"CMS / RCE",       diff:2, req:true},
+    {id:"spring4shell",name:"Spring4Shell",     path:"spring/CVE-2022-22965",  cat:"Java / RCE",      diff:3, req:false},
+    {id:"confluence",  name:"Confluence OGNL",  path:"confluence/CVE-2022-26134",cat:"App / RCE",     diff:2, req:false},
+    {id:"weblogic",    name:"WebLogic RCE",     path:"weblogic/CVE-2019-2725", cat:"App / RCE",       diff:3, req:false},
+    {id:"httpd4177",   name:"Apache Path Traversal",path:"httpd/CVE-2021-41773",cat:"Web / LFI-RCE", diff:1, req:false},
+    {id:"tomcat",      name:"Tomcat PUT RCE",   path:"tomcat/CVE-2017-12615",  cat:"Web / Upload",    diff:1, req:false},
+    {id:"fastjson",    name:"Fastjson deserialization",path:"fastjson/1.2.24-rce",cat:"Java / Deser",diff:3, req:false}
+  ];
+
+  var LS_KEY = "tpc-vulhub-labs";
+  var done = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+  var labList = document.getElementById("labList");
+  var fill = document.getElementById("trackFill");
+  var count = document.getElementById("trackCount");
+  var filter = "all";
+
+  function stars(d){ return "★".repeat(d) + "☆".repeat(3 - d); }
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(done)); }
+
+  function update(){
+    var total = LABS.length, n = 0;
+    LABS.forEach(function(l){ if(done[l.id]) n++; });
+    fill.style.width = (total ? n/total*100 : 0) + "%";
+    count.textContent = n + " / " + total;
+  }
+
+  function render(){
+    labList.innerHTML = "";
+    LABS.forEach(function(l){
+      var isDone = !!done[l.id];
+      if(filter === "todo" && isDone) return;
+      if(filter === "done" && !isDone) return;
+      if(filter === "req"  && !l.req) return;
+      var row = document.createElement("div");
+      row.className = "lab-row" + (isDone ? " done" : "");
+      row.innerHTML =
+        '<label>'+
+          '<input type="checkbox" '+(isDone?"checked":"")+' data-id="'+l.id+'">'+
+          '<span class="lab-meta">'+
+            '<span class="lab-name">'+l.name+'</span> '+
+            (l.req?'<span class="pill req">Required</span>':'')+
+            '<br><span class="lab-path">'+l.path+'</span>'+
+          '</span>'+
+        '</label>'+
+        '<span class="lab-tags">'+
+          '<span class="pill cat">'+l.cat+'</span>'+
+          '<span class="diff d'+l.diff+'" title="difficulty">'+stars(l.diff)+'</span>'+
+        '</span>';
+      labList.appendChild(row);
+    });
+    update();
+  }
+
+  labList.addEventListener("change", function(e){
+    var cb = e.target.closest("input[type=checkbox]"); if(!cb) return;
+    if(cb.checked){ done[cb.dataset.id] = true; } else { delete done[cb.dataset.id]; }
+    save();
+    cb.closest(".lab-row").classList.toggle("done", cb.checked);
+    if(filter !== "all"){ render(); } else { update(); }
+  });
+
+  document.querySelector("[data-track-filter]").addEventListener("click", function(e){
+    var tab = e.target.closest(".tab"); if(!tab) return;
+    this.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+    tab.classList.add("active");
+    filter = tab.dataset.filter;
+    render();
+  });
+
+  document.getElementById("trackReset").addEventListener("click", function(){
+    if(confirm("Clear all lab progress on this browser?")){ done = {}; save(); render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
