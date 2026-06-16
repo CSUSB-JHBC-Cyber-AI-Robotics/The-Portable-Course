@@ -98,6 +98,21 @@ h2.section-h{font-size:1.6rem; margin:8px 0 4px}
 .callout b{color:var(--csusb-gold)}
 .callout code{font-family:var(--mono); background:rgba(255,255,255,.14); padding:.1em .45em; border-radius:6px; font-size:.9em}
 
+/* ---- Download buttons ---- */
+.btn{display:inline-flex; align-items:center; gap:9px; font-weight:700; font-size:.95rem;
+  padding:13px 22px; border-radius:11px; border:1px solid var(--border); background:var(--surface);
+  color:var(--ink); box-shadow:var(--shadow); cursor:pointer; transition:transform .14s, box-shadow .14s}
+.btn:hover{transform:translateY(-2px); text-decoration:none; box-shadow:0 12px 26px rgba(10,30,60,.16)}
+.btn-primary{background:var(--csusb-blue); color:#fff; border-color:var(--csusb-blue)}
+.btn-primary:hover{background:#00498c}
+.dl-row{display:flex; flex-wrap:wrap; gap:12px; margin:10px 0 4px}
+.dl-sub{margin:20px 0 8px; color:var(--muted); font-weight:600}
+.dl-grid{display:grid; gap:12px}
+@media(min-width:740px){ .dl-grid{grid-template-columns:repeat(3,1fr)} }
+.btn-mod{justify-content:flex-start; border-left:5px solid var(--csusb-blue-2)}
+.btn-mod[data-c="2"]{border-left-color:#23b6a0}
+.btn-mod[data-c="4"]{border-left-color:var(--csusb-gold)}
+
 footer{border-top:1px solid var(--border); margin-top:40px; padding:26px 0 50px; color:var(--muted); font-size:.9rem}
 footer .wrap{display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center}
 footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gold)}
@@ -237,6 +252,24 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
       </a>
     </div>
     <p><small>More modules are on the way — this is a living course.</small></p>
+  </section>
+
+  <!-- ============================================================  DOWNLOAD  ============================================================ -->
+  <section id="download">
+    <h2 class="section-h">Get the course</h2>
+    <p>Grab the whole course as a ZIP to drop onto your USB drive, or download a single module.</p>
+    <div class="dl-row">
+      <a class="btn btn-primary" href="https://github.com/des-work/The-Portable-Course/archive/refs/heads/master.zip">⬇ Download full course (.zip)</a>
+      <a class="btn" href="https://github.com/des-work/The-Portable-Course" target="_blank" rel="noopener">★ View on GitHub</a>
+    </div>
+    <p class="dl-sub">Or download just one module:</p>
+    <div class="dl-grid">
+      <a class="btn btn-mod" data-c="1" href="Phases-of-Pen-Testing.html" download>⬇ Module 01 · Pen-Testing Phases</a>
+      <a class="btn btn-mod" data-c="2" href="Vulhub-Guide.html" download>⬇ Module 02 · Vulhub Guide</a>
+      <a class="btn btn-mod" data-c="4" href="Ultimate-Thumb-Drive-Guide.html" download>⬇ Module 04 · Ultimate Thumb Drive</a>
+    </div>
+    <p><small>Each module is a single self-contained file — downloading it is all you need; it runs
+       offline in any browser.</small></p>
   </section>
 
   <!-- ============================================================  CALLOUT  ============================================================ -->
