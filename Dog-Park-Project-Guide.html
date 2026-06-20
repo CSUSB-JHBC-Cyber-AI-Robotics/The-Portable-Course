@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Dog Park Project Guide — a field guide for IST 4910 Enterprise Networking. Build, defend, and run a fictional business on Proxmox.">
+<title>Dog Park Project Guide · IST 4910 · The Portable Course</title>
+
+<!-- ============================================================================
+     THE PORTABLE COURSE  ·  IST 4910  ·  Dog Park Project Guide
+     Inherits Template v1.0 (see Vulhub-Guide.html).
+     ----------------------------------------------------------------------------
+     PURPOSE
+       Help 4910 teams reason their way through getting their assigned
+       Proxmox VMs online, talking to each other, joined to a domain, and
+       hosting a working business website before pen-test week — without
+       handing them the exact commands and rules. Socratic > prescriptive.
+     FILE MAP
+       1. DESIGN SYSTEM  — shared course variables in :root (same look as
+                           Module 02). 4910-only flourishes near the bottom.
+       2. COMPONENTS     — cards, accordions, tabs, tracker.
+       3. CONTENT (body) — semantic HTML, easy to edit in place.
+       4. SCRIPT         — vanilla JS. CHECKLIST array (self-check tracker)
+                           and ZONES array (zone explorer) are EDIT-ME data.
+     No build step. No dependencies. Progress saves in the browser.
+     ========================================================================= -->
+
+<style>
+/* ======================================================================
+   1. DESIGN SYSTEM  ·  shared across every Portable Course file
+   ====================================================================== */
+:root{
+  --bg:        #f5f7fb;
+  --surface:   #ffffff;
+  --surface-2: #eef2f8;
+  --text:      #1b2333;
+  --muted:     #5a6678;
+  --border:    #dde3ec;
+  --shadow:    0 1px 2px rgba(20,30,55,.06), 0 8px 24px rgba(20,30,55,.06);
+
+  --primary:   #2f5bdc;
+  --primary-ink:#1c3aa0;
+  --primary-wash:#e9eefc;
+  --accent2:   #2496ed;
+  --red:   #e02436;
+  --green: #0c9b73;
+  --gold:  #e8a33d;             /* CSUSB sunrise accent */
+
+  --easy:#1f9d56; --med:#d98324; --hard:#d23f54;
+  --ok:#1f9d56;  --warn:#d98324;  --danger:#d23f54;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --maxw: 980px;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --gap: 22px;
+}
+[data-theme="dark"]{
+  --bg:#0a0e15; --surface:#0f1420; --surface-2:#161e2d;
+  --text:#cdd6e5; --muted:#74839a; --border:#1d2636;
+  --shadow:0 0 0 1px rgba(47,91,220,.06), 0 14px 40px rgba(0,0,0,.55);
+  --primary:#54a6ff; --primary-ink:#a9cdff; --primary-wash:#0e1f34; --accent2:#4aa9f0;
+  --red:#ff3e4d; --green:#36d8a6;
+  --hard:#ff5168;
+}
+
+/* ======================================================================
+   2. BASE + COMPONENTS  (parity with Module 02)
+   ====================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+h1,h2,h3,h4{line-height:1.25; font-weight:700; margin:1.6em 0 .5em}
+h2{font-size:1.7rem; scroll-margin-top:84px}
+h3{font-size:1.25rem}
+h4{font-size:1.02rem; color:var(--primary-ink); margin:1.2em 0 .3em}
+[data-theme="dark"] h4{color:var(--primary)}
+p{margin:.7em 0}
+a{color:var(--primary); text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono); font-size:.92em; background:var(--surface-2); padding:.12em .4em; border-radius:6px}
+small{color:var(--muted)}
+hr{border:0; border-top:1px solid var(--border); margin:2.4em 0}
+ul,ol{padding-left:1.3em} li{margin:.35em 0}
+
+#progress{position:fixed; top:0; left:0; height:3px; width:0;
+  background:linear-gradient(90deg,var(--accent2),var(--primary),var(--gold));
+  z-index:60; transition:width .1s linear}
+
+header.topbar{position:sticky; top:0; z-index:50; background:var(--surface);
+  border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex; align-items:center; gap:18px; height:60px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; white-space:nowrap}
+.brand small{display:block; font-weight:500; font-size:.7rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); line-height:1}
+.nav{display:flex; gap:4px; margin-left:auto; overflow:auto}
+.nav a{color:var(--muted); padding:7px 11px; border-radius:8px; font-size:.86rem; font-weight:600; white-space:nowrap}
+.nav a:hover{background:var(--surface-2); text-decoration:none}
+.nav a.active{color:var(--primary); background:var(--primary-wash)}
+.icon-btn{border:1px solid var(--border); background:var(--surface); color:var(--text);
+  width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.05rem; display:grid; place-items:center}
+.icon-btn:hover{background:var(--surface-2)}
+
+.hero{padding:54px 0 10px; text-align:center}
+.hero .kicker{display:inline-block; background:var(--primary-wash); color:var(--primary-ink);
+  font-weight:700; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; padding:6px 13px; border-radius:999px}
+.hero h1{font-size:2.55rem; margin:.35em 0 .15em; letter-spacing:-.02em}
+.hero p.lead{font-size:1.18rem; color:var(--muted); max-width:680px; margin:.4em auto 0}
+.meta-row{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:22px}
+.chip{background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  padding:6px 14px; font-size:.85rem; font-weight:600; box-shadow:var(--shadow)}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow); margin:var(--gap) 0}
+.grid{display:grid; gap:var(--gap)}
+@media(min-width:720px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
+
+.note{border-left:4px solid var(--primary); background:var(--primary-wash);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 18px; margin:var(--gap) 0}
+.note.warn{border-color:var(--warn); background:#fdeeda}
+.note.danger{border-color:var(--danger); background:#fce4ee}
+.note.ok{border-color:var(--ok); background:#e6f6ec}
+.note.think{border-color:var(--gold); background:#fcf2dc}
+[data-theme="dark"] .note.warn{background:#33260f}
+[data-theme="dark"] .note.danger{background:#321626}
+[data-theme="dark"] .note.ok{background:#10251a}
+[data-theme="dark"] .note.think{background:#2a210a}
+.note b{display:block; margin-bottom:2px}
+
+.snippet{position:relative; background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:14px 16px; margin:14px 0; overflow:auto}
+.snippet pre{margin:0; font-family:var(--mono); font-size:.9rem; white-space:pre}
+.copy-btn{position:absolute; top:8px; right:8px; font-size:.72rem; font-weight:700;
+  border:1px solid var(--border); background:var(--surface); color:var(--muted); border-radius:7px; padding:4px 9px; cursor:pointer}
+.copy-btn:hover{color:var(--primary); border-color:var(--primary)}
+
+.term{border-bottom:2px dotted var(--primary); cursor:help; position:relative}
+.term:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:150%;
+  transform:translateX(-50%); width:max-content; max-width:280px; background:var(--text); color:var(--bg);
+  font-size:.82rem; line-height:1.4; font-weight:500; text-align:left; padding:9px 12px;
+  border-radius:9px; box-shadow:var(--shadow); z-index:40; white-space:normal}
+.term:hover::before{content:""; position:absolute; left:50%; bottom:150%;
+  transform:translate(-50%,90%); border:6px solid transparent; border-top-color:var(--text); z-index:40}
+
+.acc{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin:12px 0;
+  background:var(--surface)}
+.acc-head{width:100%; text-align:left; background:var(--surface); border:0; cursor:pointer;
+  padding:15px 18px; font-weight:700; font-size:1rem; color:var(--text); display:flex; align-items:center; gap:12px}
+.acc-head:hover{background:var(--surface-2)}
+.acc-head .caret{margin-left:auto; transition:transform .25s; color:var(--muted)}
+.acc.open .acc-head .caret{transform:rotate(90deg)}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .35s ease}
+.acc-body .inner{padding:4px 18px 18px}
+.acc-head .tag{font-family:var(--mono); font-size:.72rem; color:var(--muted); font-weight:700;
+  background:var(--surface-2); padding:3px 8px; border-radius:6px; letter-spacing:.04em}
+
+table{width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--surface-2); font-weight:700}
+
+footer{margin:60px 0 40px; color:var(--muted); font-size:.9rem; text-align:center}
+section{padding-top:8px}
+.section-tag{font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary)}
+
+/* ---- 4910 zone cards (the topology explorer) ---- */
+.zones{display:grid; gap:14px; margin:14px 0}
+@media(min-width:720px){ .zones{grid-template-columns:repeat(3,1fr)} }
+.zone{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px 18px; box-shadow:var(--shadow); position:relative; overflow:hidden}
+.zone::before{content:""; position:absolute; left:0; right:0; top:0; height:5px;
+  background:linear-gradient(90deg,var(--primary),var(--accent2))}
+.zone[data-z="wan"]::before{background:linear-gradient(90deg,var(--red),var(--gold))}
+.zone[data-z="dmz"]::before{background:linear-gradient(90deg,var(--gold),var(--accent2))}
+.zone[data-z="lan"]::before{background:linear-gradient(90deg,var(--green),var(--primary))}
+.zone h3{margin:.3em 0 .15em; font-size:1.1rem}
+.zone .cidr{font-family:var(--mono); color:var(--muted); font-size:.85rem}
+.zone ul{margin:.6em 0 0; padding-left:1.1em; font-size:.93rem}
+.zone li{margin:.25em 0}
+
+/* ---- 4910 ascii network diagram ---- */
+.diagram{background:#0d1117; color:#cdd6e4; border:1px solid #232c3d;
+  border-radius:12px; padding:18px 20px; overflow:auto; font-family:var(--mono);
+  font-size:.86rem; line-height:1.5; box-shadow:var(--shadow); margin:18px 0}
+.diagram .lbl{color:#ffbd2e}
+.diagram .ip{color:#79c0ff}
+.diagram .zn{color:#36d8a6}
+
+/* ---- 4910 ping-ladder visual ---- */
+.ladder{display:grid; gap:8px; margin:12px 0}
+.ladder .rung{display:flex; align-items:center; gap:12px; background:var(--surface-2);
+  border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px}
+.ladder .rung .n{font-family:var(--mono); font-weight:800; color:var(--primary);
+  background:var(--surface); border:1px solid var(--border); border-radius:50%;
+  width:28px; height:28px; display:grid; place-items:center; font-size:.85rem; flex:none}
+.ladder .rung .what{flex:1}
+.ladder .rung .what b{font-family:var(--mono); font-weight:700}
+.ladder .rung .why{color:var(--muted); font-size:.86rem}
+
+/* ---- 4910 decision-tree blocks ---- */
+.q{background:var(--surface-2); border:1px dashed var(--border);
+  border-radius:var(--radius-sm); padding:14px 16px; margin:14px 0}
+.q b{display:block; color:var(--primary-ink); margin-bottom:6px; font-family:var(--mono); font-size:.95rem}
+[data-theme="dark"] .q b{color:var(--primary)}
+.q .ans{font-style:italic; color:var(--muted)}
+
+/* ---- 4910 self-check tracker ---- */
+.tracker-top{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:8px}
+.progress-wrap{flex:1 1 220px; background:var(--surface-2); border-radius:999px; height:14px; overflow:hidden}
+.progress-fill{height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--easy));
+  transition:width .35s ease}
+.tracker-count{font-weight:800; font-size:.95rem; white-space:nowrap}
+.check-group{margin:14px 0 4px}
+.check-group h4{margin:0 0 4px}
+.check-row{display:flex; align-items:flex-start; gap:14px; padding:11px 4px; border-bottom:1px solid var(--border)}
+.check-row label{display:flex; align-items:flex-start; gap:13px; cursor:pointer; flex:1; min-width:0}
+.check-row input{width:20px; height:20px; accent-color:var(--easy); flex:none; cursor:pointer; margin-top:2px}
+.check-name{font-weight:600}
+.check-hint{display:block; color:var(--muted); font-size:.86rem; margin-top:2px}
+.check-row.done .check-name{text-decoration:line-through; color:var(--muted)}
+.reset-btn{border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  border-radius:8px; padding:7px 13px; font-weight:700; font-size:.82rem; cursor:pointer}
+.reset-btn:hover{color:var(--danger); border-color:var(--danger)}
+
+/* ---- 4910 callout bands ---- */
+.band{background:linear-gradient(135deg, var(--primary) 0%, #1c3aa0 100%); color:#fff;
+  border-radius:var(--radius); padding:22px 26px; margin:30px 0; box-shadow:var(--shadow)}
+.band.gold{background:linear-gradient(135deg, #c9772a 0%, var(--gold) 100%); color:#1b2333}
+.band h3{margin-top:0; color:inherit}
+.band b{color:var(--gold)}
+.band.gold b{color:#1c3aa0}
+
+/* ======================================================================
+   TEMPLATE FLOURISH LAYER (matches Module 02; lighter for 4910)
+   ====================================================================== */
+body{
+  background-image:
+    linear-gradient(rgba(120,140,170,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,140,170,.05) 1px, transparent 1px);
+  background-size:42px 42px;
+}
+.brand{font-family:var(--mono)}
+.brand small{color:var(--primary)}
+.nav a{font-family:var(--mono); font-size:.8rem; letter-spacing:-.01em}
+.section-tag{font-family:var(--mono); color:var(--primary)}
+.section-tag::before{content:"// "; color:var(--green)}
+h2{font-family:var(--mono); letter-spacing:-.01em}
+h2::before{content:"$ "; color:var(--green)}
+.hero .kicker{font-family:var(--mono); background:transparent; border:1px solid var(--border); color:var(--green)}
+.hero .kicker::before{content:"~$ "; color:var(--muted)}
+.hero h1{font-family:var(--mono); font-size:2.1rem; line-height:1.15; letter-spacing:-.02em}
+.chip{font-family:var(--mono); font-size:.8rem}
+.copy-btn{font-family:var(--mono)}
+.snippet{border-left:3px solid var(--green)}
+#progress{background:linear-gradient(90deg, var(--primary), var(--gold))}
+.card{position:relative}
+.card::before{content:""; position:absolute; left:-1px; right:-1px; top:-1px; height:2px;
+  background:linear-gradient(90deg, var(--primary), transparent 55%);
+  border-radius:var(--radius) var(--radius) 0 0}
+body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55;
+  background:repeating-linear-gradient(0deg, rgba(127,150,180,.04) 0 1px, transparent 1px 3px)}
+.topbar{box-shadow:0 1px 0 rgba(47,91,220,.18)}
+.acc-head:hover{box-shadow:0 0 20px -7px var(--green)}
+.icon-btn:hover{border-color:var(--primary); box-shadow:0 0 16px -5px var(--primary)}
+.card:hover{box-shadow:0 0 0 1px rgba(47,91,220,.25), var(--shadow)}
+.cmdline{font-family:var(--mono); color:var(--muted); font-size:.9rem; margin:16px 0 0; word-break:break-word}
+.cmdline b{color:var(--green); font-weight:600}
+.cmdline i{color:var(--gold); font-style:normal}
+.cmdline::after{content:" \2587"; color:var(--green); animation:cursor 1.1s steps(1) infinite}
+@keyframes cursor{50%{opacity:0}}
+</style>
+</head>
+
+<body>
+<div id="progress"></div>
+
+<!-- ============================================================  TOP NAV  ============================================================ -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 12 L7 7 H17 L21 12 L17 17 H7 Z" fill="var(--primary)"/>
+        <circle cx="12" cy="12" r="2.6" fill="#fff"/>
+      </svg>
+      <span>Portable Course<small>IST 4910 · Dog Park Project</small></span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="index.html">⌂ Home</a>
+      <a href="#mission">Mission</a>
+      <a href="#machines">Machines</a>
+      <a href="#mindset">Mindset</a>
+      <a href="#connectivity">Connectivity</a>
+      <a href="#firewall">Firewall</a>
+      <a href="#identity">Identity</a>
+      <a href="#business">Business</a>
+      <a href="#attack">Pen-test Week</a>
+      <a href="#check">Self-check</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<!-- ============================================================  HERO  ============================================================ -->
+<div class="wrap">
+  <div class="hero" id="start">
+    <span class="kicker">IST 4910 · Enterprise Networking</span>
+    <h1>The Dog Park Project</h1>
+    <p class="lead">Eight virtual machines. A fictional business to run. One week of pen-testers
+      from 4620 trying to take you offline. This guide helps you <em>think</em> your way through
+      it — it will not hand you the answers.</p>
+    <p class="cmdline"><b>team@4910</b>:<i>~/dog-park</i>$ snapshot all; then think</p>
+    <div class="meta-row">
+      <span class="chip">🎯 Goal: a live business</span>
+      <span class="chip">🧠 Socratic, not prescriptive</span>
+      <span class="chip">📦 8 VMs on Proxmox</span>
+      <span class="chip">⏱ Pen-test week looms</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================  1. MISSION  ============================================================ -->
+<div class="wrap">
+<section id="mission">
+  <span class="section-tag">Part 1</span>
+  <h2>The mission</h2>
+  <p>You are an IT team standing up a new company from nothing. By the start of pen-test week,
+     orange-team "customers" will visit your website and place real orders. The 4620 class will
+     simultaneously try to take you offline — exploiting weak rules, dropping your services,
+     pivoting through whatever you forgot to lock down. <b>Your grade is your uptime.</b></p>
+
+  <div class="band">
+    <h3>What "done" looks like</h3>
+    <ul style="margin:.4em 0; line-height:1.7">
+      <li>A reachable website that lets orange-team customers buy your <b>3 goods</b> and <b>3 services</b>.</li>
+      <li>An internal team — admins, users, guests — that can log into any workstation with one set of credentials.</li>
+      <li>Email between staff. A database backing orders. A monitoring dashboard you actually watch.</li>
+      <li>A firewall that says "no" by default and "yes" only to the traffic the business needs.</li>
+      <li>Documentation good enough that a teammate out sick on Monday can fix things on Tuesday.</li>
+    </ul>
+    <p style="margin:.6em 0 0"><b>Every other task</b> on the requirements sheet — DHCP, routes, AD, chatbot, backups —
+      exists to support those five outcomes. When in doubt, ask: <i>does this make the storefront work or
+      keep it up?</i></p>
+  </div>
+
+  <div class="note think">
+    <b>Why most teams stall in week 1</b>
+    They start by configuring individual machines without a picture of the whole network in their
+    heads. Two days later their RHEL client can't ping the firewall and nobody knows whether the
+    cable, the route, the firewall rule, or DNS is the problem. <b>Read the next two sections before
+    you touch a VM.</b>
+  </div>
+</section>
+
+<!-- ============================================================  2. MACHINES  ============================================================ -->
+<section id="machines">
+  <span class="section-tag">Part 2</span>
+  <h2>Your eight machines</h2>
+  <p>Before anything else, learn what each machine is <em>for</em> and which zone it lives in.
+     Every config decision you make later flows from this. Click each row to open the brief.</p>
+
+  <div class="diagram" aria-label="ASCII diagram of the three-zone network">
+                          <span class="lbl">[ Internet ]</span>
+                                |
+                       <span class="zn">WAN  (172.31.0.0/24)</span>
+                                |
+                     <span class="lbl">[ Vyatta WAN ]</span>  <span class="ip">172.31.0.1</span>
+                                |
+                          <span class="lbl">[ Firewall ]</span>
+                          <span class="ip">192.168.2.2</span>
+                            /            \
+              <span class="zn">DMZ / Screened</span>          <span class="zn">LAN (192.168.1.0/24)</span>
+              <span class="zn">(10.0.1.0/24)</span>                |
+                  /    \              <span class="lbl">[ Vyatta LAN ]</span>
+                 /      \             <span class="ip">192.168.1.1</span>
+       <span class="lbl">[ Win Web ]</span>  <span class="lbl">[ RHEL DB ]</span>            |
+       <span class="ip">10.0.1.100</span>  <span class="ip">10.0.1.200</span>     +---------+---------+---------+
+                                |         |         |         |
+                             <span class="lbl">[AD/DNS]</span> <span class="lbl">[RHEL cli]</span> <span class="lbl">[Kali]</span>  ...
+                             <span class="ip">.5</span>      <span class="ip">.100</span>    <span class="ip">.50</span>
+  </div>
+
+  <small>Exact addresses are illustrative — your team's instructor-issued plan is the source of
+    truth. The point is that <b>three zones exist</b> and each machine sits in exactly one of them.</small>
+
+  <div class="acc">
+    <button class="acc-head"><span>🔥 Firewall</span> <span class="tag">core</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> the gatekeeper between every zone. Every packet that crosses zones passes
+        through here. If two machines in different zones can't reach each other, this is your
+        first suspect — and the first place you should snapshot before changing anything.</p>
+      <p><b>Mental model:</b> default-deny. Start from "nothing talks to anything" and add only
+        the conversations the business needs. A rule that says "allow LAN to internet" is broader
+        than "allow LAN clients to web on TCP 80/443" — and the broader rule will haunt you on
+        pen-test week.</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🛰️ Vyatta WAN router</span> <span class="tag">edge</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> the edge router that connects you to the outside world. It is the last hop
+        before "the internet" and the first hop a return packet sees coming back. It usually does
+        NAT — translating your private addresses to the single public-ish address on the WAN.</p>
+      <p><b>Key question to answer:</b> what is its WAN-side address, what is its LAN-side address
+        (facing the firewall), and what default route does it use to reach the internet?</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🛰️ Vyatta LAN router</span> <span class="tag">internal</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> routes between the firewall and your internal LAN switch. Your internal
+        machines use the Vyatta LAN as their <b>default gateway</b> — when an internal client
+        wants to reach the web server in the DMZ, it sends the packet here first.</p>
+      <p><b>Why two routers?</b> Real enterprises put one router at the edge and another deep
+        inside so you can apply different policy at each layer. It also gives you a clean place
+        to terminate VLANs and DHCP scopes inside the LAN.</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🪪 AD/DNS (Windows Server)</span> <span class="tag">LAN</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> the identity backbone. Active Directory holds your users, groups, and
+        computer accounts. DNS — running on the same box — is how every other machine <em>finds</em>
+        it. <b>DNS comes before identity, and identity comes before almost everything else.</b></p>
+      <p><b>Watch for:</b> machines that point at the wrong DNS server. A workstation that uses
+        Google DNS (8.8.8.8) instead of your AD/DNS box cannot find <code>dc01.yourcompany.local</code> —
+        so it cannot join the domain, no matter how many times you click "Join."</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🌐 Windows web server</span> <span class="tag">DMZ</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> hosts the customer-facing site that takes orders from the orange team. Lives
+        in the screened subnet because it must be reachable from the outside, but you don't want
+        an attacker who pops it to pivot straight into your LAN.</p>
+      <p><b>Will need:</b> a route to the database (DMZ → DMZ), a route out to the internet for
+        software updates, and a firewall rule that allows the orange team to reach TCP 80/443.
+        It must <em>not</em> be allowed to freely reach into the LAN.</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🗄️ RHEL database</span> <span class="tag">DMZ</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> backs the web server. Stores goods, services, customers, orders. It is the
+        most valuable target on your network — if 4620 corrupts or drops it, your business is done.</p>
+      <p><b>Think about:</b> who is allowed to talk to it? Only the web server, on the database
+        port — not the whole DMZ, not the LAN, definitely not the internet. Backups are not
+        optional and a backup you have never restored is not a backup.</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>💻 RHEL client</span> <span class="tag">LAN</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role:</b> a Linux workstation for staff. Has to authenticate against AD just like the
+        Windows clients do — which means installing the right packages (<code>realmd</code>,
+        <code>sssd</code>, <code>oddjob</code>, <code>adcli</code>, <code>samba-common-tools</code>),
+        pointing at your AD/DNS server, and joining the realm.</p>
+      <p><b>Common failure:</b> the team gets Windows joined first, declares victory, then can't
+        figure out why RHEL won't join. The fix is almost always DNS — see Part 5.</p>
+    </div></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head"><span>🐉 Kali</span> <span class="tag">LAN (tools)</span> <span class="caret">▶</span></button>
+    <div class="acc-body"><div class="inner">
+      <p><b>Role for 4910:</b> your <b>blue-team self-test box</b>. Use it to scan your own network
+        with <code>nmap</code> and confirm that the only open ports are the ones you intended.
+        If Kali sees more than you expected, 4620 will see it too.</p>
+      <p><b>What it is not:</b> a place to launch attacks at other teams. 4620 attacks <em>you</em>;
+        you scan <em>yourselves</em>.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============================================================  3. MINDSET  ============================================================ -->
+<section id="mindset">
+  <span class="section-tag">Part 3</span>
+  <h2>The 4910 mindset</h2>
+  <p>If you only take four things from this guide, take these. They are worth more than any
+     specific config trick because they apply to every problem you will hit.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>① Snapshot before you change</h3>
+      <p>Proxmox snapshots are the difference between "I broke routing for 20 minutes" and "we
+         lost a day rebuilding." Before you touch the firewall, the routers, or the AD server,
+         take a snapshot. Name it for what you are about to try.</p>
+      <p style="color:var(--muted); font-size:.92rem"><b>Habit:</b> snapshot → change one thing →
+        test → if it works, snapshot again and move on. If it doesn't, roll back and re-read.</p>
+    </div>
+    <div class="card">
+      <h3>② Isolate one variable</h3>
+      <p>When something doesn't work, do not change three settings and reboot. Change <em>one</em>
+         thing, test that one thing, then change the next. A broken network with one wrong setting
+         and a broken network with three wrong settings look identical — but only one is fixable
+         in an hour.</p>
+    </div>
+    <div class="card">
+      <h3>③ Read the error</h3>
+      <p>Most students reading this lose more time to guessing than to anything else. The terminal
+         is telling you what's wrong. Paste the exact message into your AI IDE chat or into a
+         search engine before you change a config. <code>Name or service not known</code> means
+         something very different than <code>No route to host</code>.</p>
+    </div>
+    <div class="card">
+      <h3>④ Document while it's fresh</h3>
+      <p>When you finally get the firewall talking to the DMZ, the steps are crystal clear. Three
+         days later, after AD has eaten your Tuesday, you will not remember. Write it down <em>now</em>
+         — in the team Google Doc — including the things you tried that didn't work.</p>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <b>The single most common 4910 time sink</b>
+    Teams spend hours fighting connectivity because they jumped to the firewall before confirming
+    the routers were healthy, or jumped to AD before confirming DNS resolved. Walk the network
+    bottom-up: <b>link → IP → gateway → route → firewall → DNS → service</b>. If a step below
+    fails, every step above will also fail — but for misleading reasons.
+  </div>
+</section>
+
+<!-- ============================================================  4. CONNECTIVITY  ============================================================ -->
+<section id="connectivity">
+  <span class="section-tag">Part 4 · deep dive</span>
+  <h2>Connectivity: DHCP, routing, and the three zones</h2>
+  <p>Most teams blow a week here. This section is long on purpose. The goal is not to give you
+     commands — it is to make you understand the <em>questions</em> you should be answering
+     before you type anything.</p>
+
+  <h3>Three zones, three address spaces</h3>
+  <p>Your network is split into three trust zones. Each has its own address space. A machine's
+     address tells you which zone it lives in, who its default gateway is, and which router
+     route table it depends on.</p>
+
+  <div class="zones">
+    <div class="zone" data-z="wan">
+      <h3>WAN</h3>
+      <div class="cidr">172.31.0.0/24</div>
+      <ul>
+        <li>Edge of the network</li>
+        <li>Vyatta WAN lives here</li>
+        <li>Talks to the "internet"</li>
+        <li>NAT happens here</li>
+      </ul>
+    </div>
+    <div class="zone" data-z="dmz">
+      <h3>DMZ / Screened</h3>
+      <div class="cidr">10.0.1.0/24</div>
+      <ul>
+        <li>Public-facing services</li>
+        <li>Web server, database</li>
+        <li>Reachable from internet</li>
+        <li><b>Cannot</b> freely reach LAN</li>
+      </ul>
+    </div>
+    <div class="zone" data-z="lan">
+      <h3>LAN</h3>
+      <div class="cidr">192.168.1.0/24</div>
+      <ul>
+        <li>Trusted internal network</li>
+        <li>Workstations, AD/DNS, Kali</li>
+        <li>Vyatta LAN is gateway</li>
+        <li>Reaches DMZ via firewall</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>DHCP or static? — the decision exercise</h3>
+  <p>Before you stand up a DHCP scope, decide which machines get static addresses and which
+     ones get leases. There is a real principle here, not just preference.</p>
+
+  <div class="q">
+    <b>Q: Should the AD/DNS server use DHCP?</b>
+    <p>Think about it before reading on. <em>If a server changes address, what breaks?</em></p>
+    <p class="ans">No. Anything that has clients pointing at it by IP, or that other machines
+      look up by name, must hold a stable address. Servers (AD/DNS, web, DB, mail) get static
+      addresses every time. Document them.</p>
+  </div>
+
+  <div class="q">
+    <b>Q: Should the RHEL client workstation use DHCP?</b>
+    <p>What is gained or lost by handing it a dynamic address?</p>
+    <p class="ans">Yes — usually. Workstations are interchangeable. DHCP saves you from
+      configuring each one by hand and is exactly what real enterprises do. Reserve a chunk of
+      the LAN scope (say, the high end) for staff laptops and let DHCP hand them out.</p>
+  </div>
+
+  <div class="q">
+    <b>Q: Should the routers and firewall use DHCP?</b>
+    <p>What is the gateway for the LAN clients?</p>
+    <p class="ans">Never. The router's address is what every other machine points at as its
+      default gateway. If the router's address moved, the entire LAN would lose its way out.</p>
+  </div>
+
+  <p>So the rule of thumb you should be able to defend in your write-up:</p>
+  <div class="note ok">
+    <b>Static IPs for infrastructure (routers, firewall, AD/DNS, web, DB, mail, monitoring).
+       DHCP for workstations.</b>
+    Every static address goes into your team Google Doc the same minute you assign it.
+  </div>
+
+  <h3>The four things every DHCP scope must hand out</h3>
+  <p>When you configure DHCP on the Vyatta LAN (or wherever your scope lives), the lease is not
+     just an address. It is four pieces of information without which the client cannot function:</p>
+  <ol>
+    <li><b>IP address + subnet mask</b> — tells the client which other machines are "local".</li>
+    <li><b>Default gateway</b> — where to send any packet not destined for the local subnet.
+        For your LAN, this is the Vyatta LAN's LAN-side address.</li>
+    <li><b>DNS server</b> — the AD/DNS box, by IP. If this is wrong, name lookups fail and joining
+        the domain is impossible.</li>
+    <li><b>Lease time</b> — how long the lease is valid. The default is usually fine.</li>
+  </ol>
+
+  <p>A client that has an IP but no gateway can ping its own subnet and nothing else. A client
+     that has a gateway but wrong DNS can ping the firewall by IP but cannot resolve a name. The
+     symptom tells you which piece is missing.</p>
+
+  <h3>Routing: making packets find their way</h3>
+  <p>Two routers, three zones. Each router needs to know how to reach the zones it doesn't
+     directly own. The mental shortcut:</p>
+
+  <table>
+    <thead>
+      <tr><th>Router</th><th>Knows directly</th><th>Needs a route to</th><th>Via</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Vyatta WAN</td><td>WAN (172.31.0.0/24)</td><td>everything internal</td><td>the firewall</td></tr>
+      <tr><td>Firewall</td><td>WAN side + DMZ + LAN-side</td><td>nothing — it is the hub</td><td>—</td></tr>
+      <tr><td>Vyatta LAN</td><td>LAN (192.168.1.0/24)</td><td>DMZ + internet</td><td>the firewall</td></tr>
+    </tbody>
+  </table>
+
+  <p>Notice that both Vyattas point at <em>the firewall</em> for anything they don't own. The
+     firewall is the natural hub of your routing universe because it already sits between
+     every pair of zones. <b>Don't configure routes that try to bypass the firewall</b> — that
+     defeats the whole point of having one.</p>
+
+  <div class="note warn">
+    <b>NAT lives on the WAN router</b>
+    Your internal addresses (10.0.1.x, 192.168.1.x) are private and cannot appear on the
+    internet. The Vyatta WAN translates them to its public-side address on the way out. If
+    internal machines can reach the WAN router but not "the internet," NAT is the first place
+    to check.
+  </div>
+
+  <h3>The ping ladder — your zone-by-zone diagnostic</h3>
+  <p>When connectivity breaks, do not start by inspecting firewall rules. Walk this ladder from
+     the bottom up. The first rung that fails is where the problem actually lives.</p>
+
+  <div class="ladder">
+    <div class="rung"><div class="n">1</div>
+      <div class="what"><b>ping 127.0.0.1</b><div class="why">Does this machine's network stack work at all? If not, it's a VM-level problem, not a network one.</div></div></div>
+    <div class="rung"><div class="n">2</div>
+      <div class="what"><b>ping &lt;own IP&gt;</b><div class="why">Does the interface have an address? If <code>ip addr</code> shows nothing, DHCP didn't lease — go fix DHCP before anything else.</div></div></div>
+    <div class="rung"><div class="n">3</div>
+      <div class="what"><b>ping &lt;default gateway&gt;</b><div class="why">Can you reach the next-hop router on your own subnet? If not, you have a Layer 2 / cabling / VLAN problem on Proxmox.</div></div></div>
+    <div class="rung"><div class="n">4</div>
+      <div class="what"><b>ping &lt;firewall inside address&gt;</b><div class="why">Can you cross to the firewall? If not, the LAN router is not forwarding — check its route table.</div></div></div>
+    <div class="rung"><div class="n">5</div>
+      <div class="what"><b>ping &lt;web server in DMZ by IP&gt;</b><div class="why">Can you cross zones? If steps 1–4 pass but this fails, you are almost certainly looking at a firewall rule.</div></div></div>
+    <div class="rung"><div class="n">6</div>
+      <div class="what"><b>ping 8.8.8.8</b><div class="why">Can you reach the internet by IP? If not, the WAN router or NAT is broken. (8.8.8.8 is just a famous IP — any external one works.)</div></div></div>
+    <div class="rung"><div class="n">7</div>
+      <div class="what"><b>ping google.com</b><div class="why">Can you reach the internet by name? If 6 works but 7 fails, your DNS is wrong. Do not blame routing.</div></div></div>
+  </div>
+
+  <div class="note think">
+    <b>Why the ladder works</b>
+    Each rung depends on every rung below it. If rung 5 fails but rung 4 passes, you have just
+    proved that links, addressing, and routing on this side are fine — the problem must be at
+    the boundary you just crossed. Stop guessing. Look at the boundary.
+  </div>
+
+  <h3>Symptom map</h3>
+  <p>What the failure mode tells you:</p>
+  <table>
+    <thead><tr><th>Symptom</th><th>Most likely cause</th><th>First thing to check</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Client has no IP at all</td>
+        <td>DHCP not reaching it</td>
+        <td>Is the scope running? Is the client on the right VLAN on Proxmox? Is it a DHCP relay across routers?</td>
+      </tr>
+      <tr>
+        <td>Has IP, can ping own subnet, nothing else</td>
+        <td>Missing or wrong default gateway</td>
+        <td>DHCP option 3, or the static config on the client</td>
+      </tr>
+      <tr>
+        <td>Can ping gateway, not the firewall</td>
+        <td>LAN router has no route past itself</td>
+        <td>Vyatta LAN's route table and the link to the firewall</td>
+      </tr>
+      <tr>
+        <td>Can ping firewall, not the DMZ</td>
+        <td>Firewall is denying the traffic</td>
+        <td>Firewall rule for LAN → DMZ on the right ports</td>
+      </tr>
+      <tr>
+        <td>Can ping 8.8.8.8, not google.com</td>
+        <td>DNS</td>
+        <td>The client's DNS server setting — is it pointing at your AD/DNS box, and is that box reachable?</td>
+      </tr>
+      <tr>
+        <td>Web server reachable from LAN, not from outside</td>
+        <td>Missing NAT or firewall rule for inbound WAN → DMZ</td>
+        <td>WAN router NAT + firewall inbound rule on TCP 80/443</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================  5. FIREWALL  ============================================================ -->
+<section id="firewall">
+  <span class="section-tag">Part 5</span>
+  <h2>Firewall rules: writing the conversation list</h2>
+  <p>Most teams treat the firewall as a tangle of rules to add until things work. That is how
+     you end up with an open perimeter and a 4620 team that eats your lunch. The professional
+     approach is to write down the conversations your business actually needs <em>first</em>,
+     then translate each conversation into a rule.</p>
+
+  <h3>Step 1 — list the conversations</h3>
+  <p>Before opening the firewall UI, write a table like this in your team doc. Fill it in for
+     your specific business. The columns matter:</p>
+  <table>
+    <thead><tr><th>From (zone)</th><th>To (zone)</th><th>Service</th><th>Why the business needs it</th></tr></thead>
+    <tbody>
+      <tr><td>Internet</td><td>DMZ</td><td>HTTPS/HTTP (443/80)</td><td>Orange-team customers reach the storefront</td></tr>
+      <tr><td>Web (DMZ)</td><td>DB (DMZ)</td><td>your DB port</td><td>Storefront queries products and writes orders</td></tr>
+      <tr><td>LAN</td><td>Internet</td><td>HTTPS (443)</td><td>Staff browsing for updates, docs, packages</td></tr>
+      <tr><td>LAN</td><td>DMZ</td><td>HTTPS/SSH (443/22)</td><td>Admins manage the web server</td></tr>
+      <tr><td>LAN</td><td>AD/DNS (LAN)</td><td>DNS, Kerberos, LDAP, SMB</td><td>Identity and name resolution for everything</td></tr>
+      <tr><td>DMZ</td><td>LAN</td><td><b>nothing by default</b></td><td>If the web server is popped, the attacker should be stuck in the DMZ</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Step 2 — default-deny posture</h3>
+  <p>Set your firewall so that <b>anything not in the conversation list above is denied</b>.
+     Then add allow rules one row at a time. This is harder than the opposite ("default-allow
+     and block what looks bad") but it is the only posture that survives a real attacker.</p>
+
+  <div class="note danger">
+    <b>The trap of "allow all, fix later"</b>
+    Every team is tempted to open everything up "just for now, until things work." Pen-test week
+    arrives, the rules never get tightened, and 4620 walks in through the side door. <b>Tighten
+    as you go.</b> An allow rule with a specific port and direction takes the same minute as a
+    sloppy one — and is the difference between a graded uptime and a graded outage.
+  </div>
+
+  <h3>Step 3 — read what each rule actually says</h3>
+  <p>When you write a rule, narrate it back to yourself in plain English: <em>"Allow traffic
+     from any address, to the web server's DMZ address, on TCP 80 and 443."</em> If you cannot
+     narrate it, you do not understand it, and you cannot defend it during pen-test week.</p>
+</section>
+
+<!-- ============================================================  6. IDENTITY  ============================================================ -->
+<section id="identity">
+  <span class="section-tag">Part 6 · deep dive</span>
+  <h2>Identity: AD, DNS, and joining the domain</h2>
+  <p>This is the other section where teams lose the most time. The fixes are almost never about
+     Active Directory itself — they are about the silent dependency underneath it: DNS.</p>
+
+  <h3>The order matters: DNS → AD → join</h3>
+  <p>Active Directory is a service. Like every service, clients have to <em>find</em> it before
+     they can talk to it. They find it by looking up the domain controller's name in DNS. If
+     DNS gives them the wrong answer (or no answer), nothing else you do will help.</p>
+
+  <div class="ladder">
+    <div class="rung"><div class="n">1</div>
+      <div class="what"><b>Stand up the AD/DNS server with a static IP</b><div class="why">Both AD and DNS roles live on the same box. The IP is now the most important number on your network — document it.</div></div></div>
+    <div class="rung"><div class="n">2</div>
+      <div class="what"><b>Promote the server to a domain controller and create the domain</b><div class="why">Pick a domain name you will not regret (something.local is common). This name is what every other machine will join.</div></div></div>
+    <div class="rung"><div class="n">3</div>
+      <div class="what"><b>Hand out the AD/DNS server's IP as the DNS server in DHCP</b><div class="why">Every client must learn about this box from DHCP, or be configured statically to point at it. <b>Not 8.8.8.8. Not the router. The AD/DNS box.</b></div></div></div>
+    <div class="rung"><div class="n">4</div>
+      <div class="what"><b>Verify name resolution from a client</b><div class="why">From a workstation, look up the domain name. If it returns the AD/DNS box's IP, you are clear to join. If it returns nothing or NXDOMAIN, stop — fix DNS first.</div></div></div>
+    <div class="rung"><div class="n">5</div>
+      <div class="what"><b>Join the client to the domain</b><div class="why">Now the join will work, because the client can actually find the controller it is supposed to join.</div></div></div>
+  </div>
+
+  <h3>Windows clients — the short version</h3>
+  <p>On a Windows workstation:</p>
+  <ul>
+    <li>Set the DNS server to your AD/DNS box (in the NIC properties, or via DHCP).</li>
+    <li>From a command prompt, look up your domain: <code>nslookup yourcompany.local</code>.
+        You should see the AD/DNS server's IP. If not, fix DNS before going further.</li>
+    <li>System Properties → Change settings → Domain → enter your domain name → authenticate
+        with a domain admin → reboot.</li>
+    <li>On next login, sign in as <code>YOURCOMPANY\username</code> with the domain user's password.</li>
+  </ul>
+
+  <div class="note warn">
+    <b>The classic Windows join failure</b>
+    "An Active Directory Domain Controller (AD DC) for the domain ... could not be contacted."
+    Nine times out of ten this means the client's DNS server is wrong. It is asking 8.8.8.8 or
+    its router about <code>yourcompany.local</code> — and neither of them have heard of it.
+    Fix DNS and the join works.
+  </div>
+
+  <h3>RHEL clients — what the tools actually do</h3>
+  <p>Linux domain join uses a stack of small tools that each do one thing. Knowing what each one
+     does makes troubleshooting tractable instead of magical.</p>
+
+  <table>
+    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>realmd</code></td>
+          <td>The high-level "join the domain" command. It orchestrates the other tools.</td></tr>
+      <tr><td><code>adcli</code></td>
+          <td>The actual AD-join worker that <code>realmd</code> calls. Talks to Kerberos and creates the computer account in AD.</td></tr>
+      <tr><td><code>sssd</code></td>
+          <td>The daemon that runs <em>after</em> the join. Handles login, group lookups, caching credentials. If logins fail post-join, this is who to look at.</td></tr>
+      <tr><td><code>oddjob</code> + <code>oddjob-mkhomedir</code></td>
+          <td>Creates the user's home directory on first login. Without these, the user joins but has nowhere to land.</td></tr>
+      <tr><td><code>samba-common-tools</code></td>
+          <td>Provides Kerberos / Samba helpers <code>realmd</code> uses under the hood.</td></tr>
+    </tbody>
+  </table>
+
+  <p>The flow looks like this, conceptually:</p>
+  <ol>
+    <li>Install the packages above.</li>
+    <li>Confirm the host's <code>/etc/resolv.conf</code> points at the AD/DNS server (or that
+        NetworkManager set it from DHCP). Test with <code>realm discover yourcompany.local</code>
+        — it should print details about your domain. If it can't discover, your DNS is wrong.</li>
+    <li>Join: <code>realm join yourcompany.local -U administrator</code>. It prompts for the AD
+        admin password and creates a computer account in AD.</li>
+    <li>Configure <code>sssd</code> to allow home-directory creation and to format the username
+        the way you want (with or without the domain prefix).</li>
+    <li>Test: <code>id administrator@yourcompany.local</code> should return the user's UID, GID,
+        and groups. Now <code>su - administrator@yourcompany.local</code> or <code>ssh</code> as
+        a domain user.</li>
+  </ol>
+
+  <div class="note danger">
+    <b>RHEL join symptoms and what they mean</b>
+    <ul style="margin:.4em 0; line-height:1.6">
+      <li><code>realm discover</code> returns nothing → your <code>resolv.conf</code> is wrong.
+          Fix DNS before anything else.</li>
+      <li><code>realm join</code> fails with "Insufficient permissions" → you didn't authenticate
+          as a domain admin (or the account is locked out).</li>
+      <li>Join succeeds but <code>id user@domain</code> returns "no such user" → <code>sssd</code>
+          isn't running, or its config is wrong. <code>systemctl status sssd</code>.</li>
+      <li>You can log in but have no home directory → <code>oddjob-mkhomedir</code> isn't enabled
+          or PAM doesn't call it. Look at <code>authselect</code>.</li>
+    </ul>
+  </div>
+
+  <h3>The single rule that prevents 80% of identity pain</h3>
+  <div class="band gold">
+    <p style="margin:0; font-size:1.1rem"><b>Confirm DNS resolves the domain name from the
+       client, every single time, before you click "join."</b> If <code>nslookup</code> on
+       Windows or <code>realm discover</code> on Linux can't see the domain, the join cannot
+       succeed and no amount of clicking will change that.</p>
+  </div>
+</section>
+
+<!-- ============================================================  7. BUSINESS  ============================================================ -->
+<section id="business">
+  <span class="section-tag">Part 7</span>
+  <h2>The business: website, orders, and the orange team</h2>
+  <p>Everything you just built exists so a customer can place an order. During pen-test week,
+     the orange team plays the role of those customers — they will visit your site, click
+     around, try to buy your three goods and three services, and email you about problems.
+     Your business is graded on whether they can.</p>
+
+  <h3>Tie every config decision back to the storefront</h3>
+  <p>Use this as a sanity check whenever you are about to spend an hour on something:</p>
+  <ul>
+    <li><b>If it makes the storefront work or stay up:</b> do it.</li>
+    <li><b>If it is required by the task sheet but doesn't touch the storefront:</b> do it, but
+        don't let it block the storefront.</li>
+    <li><b>If it's a cool feature nobody asked for:</b> after pen-test week.</li>
+  </ul>
+
+  <h3>Use the AI IDE for the site itself</h3>
+  <p>You don't need to write the storefront by hand. Open Cursor or Antigravity, describe your
+     business in a PRD, and iterate. The "Vibe Coding" workflow your instructor outlined in the
+     Dog Park doc gets you a working site faster than any of you will by hand.</p>
+  <p>But — keep the website's <b>secrets in <code>.env</code></b> (API keys, DB passwords, the
+     Cyberlab GPU bearer token). Push the code to GitHub; do not push the <code>.env</code>.
+     4620 reads GitHub.</p>
+
+  <h3>Orange-team customers are real users</h3>
+  <p>During pen-test week, your support inbox is real. Someone is going to email saying "I
+     can't check out." Have a process: a triage rotation, a templated reply, a way to log the
+     issue. The team that wins pen-test week is the team whose customers feel <em>served</em>,
+     not the team with the prettiest infrastructure diagram.</p>
+</section>
+
+<!-- ============================================================  8. UNDER ATTACK  ============================================================ -->
+<section id="attack">
+  <span class="section-tag">Part 8</span>
+  <h2>Pen-test week: when 4620 arrives</h2>
+  <p>The 4620 class will try to take you offline, exfiltrate your database, deface your site,
+     and otherwise prevent you from doing business. They are graded on impact. You are graded
+     on uptime. This is a real fight.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Watch, don't wait</h3>
+      <p>The monitoring dashboard you built in Section 9 of the task sheet is not for show. Put
+         it on a screen in the team's workspace. The first sign of trouble will usually be a
+         metric, not a 4620 student knocking on the door.</p>
+    </div>
+    <div class="card">
+      <h3>Snapshots are your panic button</h3>
+      <p>If a server gets defaced or destroyed, do not try to clean it. Roll back to the most
+         recent clean snapshot, identify how 4620 got in, close that door, and rebuild from a
+         known-good state. Faster every time.</p>
+    </div>
+    <div class="card">
+      <h3>Have a credentials playbook</h3>
+      <p>When 4620 makes noise, the first instinct is to rotate passwords. Decide <em>now</em>:
+         where are the credentials stored, who has the authority to rotate them, and how do you
+         get the new ones to staff without using the channel that may already be compromised?</p>
+    </div>
+    <div class="card">
+      <h3>Take notes during the week</h3>
+      <p>Every attack and every defense is graded material. Have someone whose job for the week
+         is documenting what 4620 tried, what worked, what didn't, and what you fixed. The post-
+         mortem is half your grade.</p>
+    </div>
+  </div>
+
+  <div class="note think">
+    <b>The mindset shift</b>
+    Before pen-test week, your goal is to <em>build</em>. During pen-test week, your goal is to
+    <em>operate</em>. Stop adding features. Stop refactoring. Watch the dashboard, take orders,
+    rotate when you must, and document everything.
+  </div>
+</section>
+
+<!-- ============================================================  9. SELF-CHECK  ============================================================ -->
+<section id="check">
+  <span class="section-tag">Part 9</span>
+  <h2>Self-check tracker</h2>
+  <p>Use this as a phased checklist. <b>Do not skip phases.</b> If Phase 1 isn't all green,
+     Phase 2 won't behave the way you expect — and you'll spend hours debugging the wrong layer.
+     Progress saves in this browser.</p>
+
+  <div class="card">
+    <div class="tracker-top">
+      <div class="progress-wrap"><div class="progress-fill" id="trackFill"></div></div>
+      <span class="tracker-count" id="trackCount">0 / 0</span>
+      <button class="reset-btn" id="trackReset">Reset</button>
+    </div>
+    <div id="checkList"></div>
+  </div>
+</section>
+
+<!-- ============================================================  CLOSER  ============================================================ -->
+<section>
+  <div class="band">
+    <h3>One last thing</h3>
+    <p style="margin:.4em 0">If your team is stuck and not sure what to do next, do this in order:</p>
+    <ol style="margin:.4em 0; line-height:1.7">
+      <li><b>Snapshot.</b></li>
+      <li><b>Walk the ping ladder</b> from the broken machine. Whichever rung fails is your real problem.</li>
+      <li><b>Read the error</b> — don't summarize it, copy-paste it. Into your AI IDE, into Google, into the team channel.</li>
+      <li><b>Change one thing</b> and test again. Then snapshot the win and keep going.</li>
+    </ol>
+    <p style="margin:.6em 0 0">Build the business. Defend it. Ship orders. <b>Good luck.</b></p>
+  </div>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><strong>The Portable Course</strong> · IST 4910 · Dog Park Project Guide</p>
+    <p>Educational material for authorized, lab-only use. The CHECKLIST array in the script
+       is the edit-me data — change milestones there.</p>
+  </div>
+</footer>
+
+<!-- ============================================================  3. SCRIPT  ============================================================ -->
+<script>
+(function(){
+  "use strict";
+  var root = document.documentElement;
+
+  /* ---- Theme toggle (shared course key) -------------------------- */
+  var saved = localStorage.getItem("tpc-theme");
+  if(saved){ root.setAttribute("data-theme", saved); }
+  document.getElementById("themeBtn").addEventListener("click", function(){
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tpc-theme", next);
+  });
+
+  /* ---- Reading-progress bar -------------------------------------- */
+  var bar = document.getElementById("progress");
+  window.addEventListener("scroll", function(){
+    var h = document.documentElement;
+    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+  }, {passive:true});
+
+  /* ---- Accordions ------------------------------------------------ */
+  document.querySelectorAll(".acc-head").forEach(function(head){
+    head.addEventListener("click", function(){
+      var acc = head.parentElement, body = acc.querySelector(".acc-body");
+      var open = acc.classList.toggle("open");
+      body.style.maxHeight = open ? body.scrollHeight + "px" : null;
+    });
+  });
+
+  /* ---- Active-section highlight in nav --------------------------- */
+  var navLinks = document.querySelectorAll("#nav a"), byId = {};
+  navLinks.forEach(function(a){
+    var href = a.getAttribute("href");
+    if(href && href.indexOf("#") === 0){ byId[href.slice(1)] = a; }
+  });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.remove("active"); });
+        var link = byId[en.target.id]; if(link){ link.classList.add("active"); }
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(s){ io.observe(s); });
+
+  /* ================================================================
+     EDIT-ME DATA · the phased self-check tracker
+     Each item belongs to a phase. Phases are rendered in order, with
+     an H4 heading per phase. Progress is saved per id in localStorage.
+     ================================================================ */
+  var CHECKLIST = [
+    /* Phase 0 — orientation */
+    {phase:"Phase 0 · Orientation", id:"goods",   name:"3 goods and 3 services defined",
+       hint:"You can't build a storefront without knowing what it sells."},
+    {phase:"Phase 0 · Orientation", id:"diagram", name:"Network diagram drafted (Visio or equivalent)",
+       hint:"With IPs, hostnames, and which zone each VM lives in."},
+    {phase:"Phase 0 · Orientation", id:"gdoc",    name:"Team Google Doc started for credentials and configs",
+       hint:"Every static IP, every password, every key — goes here as you assign them."},
+    {phase:"Phase 0 · Orientation", id:"snap0",   name:"Initial snapshot taken on all 8 VMs",
+       hint:"Name it 'pristine'. You will want to roll back to it more than once."},
+
+    /* Phase 1 — connectivity */
+    {phase:"Phase 1 · Connectivity (DHCP + Routing)", id:"static",  name:"Static IPs assigned to all infrastructure",
+       hint:"Routers, firewall, AD/DNS, web, DB. Documented in the team doc."},
+    {phase:"Phase 1 · Connectivity (DHCP + Routing)", id:"dhcp",    name:"DHCP scope handing out IP + gateway + DNS + lease",
+       hint:"All four options. If any is missing, clients break in subtle ways."},
+    {phase:"Phase 1 · Connectivity (DHCP + Routing)", id:"ladder",  name:"Ping ladder passes from a LAN client (rungs 1–7)",
+       hint:"127.0.0.1 → own IP → gateway → firewall → DMZ web → 8.8.8.8 → google.com."},
+    {phase:"Phase 1 · Connectivity (DHCP + Routing)", id:"nat",     name:"NAT works on Vyatta WAN (internal hosts reach the internet)",
+       hint:"If rung 6 of the ladder fails, NAT or the WAN router."},
+
+    /* Phase 2 — firewall */
+    {phase:"Phase 2 · Firewall", id:"convo",   name:"Conversation table written before any rules",
+       hint:"From-zone, to-zone, port, business reason. Drives every rule."},
+    {phase:"Phase 2 · Firewall", id:"deny",    name:"Default-deny posture set on the firewall",
+       hint:"Everything blocked, then allows added one row at a time."},
+    {phase:"Phase 2 · Firewall", id:"dmzlan",  name:"DMZ → LAN is NOT allowed by default",
+       hint:"If your web server is popped, the attacker stays in the DMZ."},
+    {phase:"Phase 2 · Firewall", id:"inbound", name:"Inbound WAN → web server works for HTTP/HTTPS",
+       hint:"Orange team can reach your storefront from outside."},
+
+    /* Phase 3 — identity */
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"addns",   name:"AD/DNS server has a static IP and the AD role",
+       hint:"Domain created. IP documented. Forward zone for your domain exists."},
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"dhcpdns", name:"DHCP hands out the AD/DNS box as the DNS server",
+       hint:"Not 8.8.8.8. Not the router. The AD/DNS box."},
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"resolve", name:"Clients can resolve the domain name in DNS",
+       hint:"nslookup on Windows, realm discover on RHEL. Returns the AD/DNS IP."},
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"winjoin", name:"At least one Windows workstation joined to the domain",
+       hint:"Visible in AD Users and Computers. Domain login works."},
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"rhjoin",  name:"RHEL client joined via realmd + sssd",
+       hint:"id user@domain returns the right groups. Domain login works."},
+    {phase:"Phase 3 · Identity (AD + DNS)", id:"accts",   name:"Admin, user, and guest accounts created and tested",
+       hint:"Each tier logs in with the access it should have, and nothing more."},
+
+    /* Phase 4 — business */
+    {phase:"Phase 4 · Business", id:"site",   name:"Website is reachable from a LAN workstation",
+       hint:"All 3 goods + 3 services visible and addable to a cart."},
+    {phase:"Phase 4 · Business", id:"db",     name:"Website writes orders to the database",
+       hint:"Place a test order; confirm a row appears in the orders table."},
+    {phase:"Phase 4 · Business", id:"email",  name:"Internal email works between two staff accounts",
+       hint:"Sent + received from a workstation mail client."},
+    {phase:"Phase 4 · Business", id:"chatbot",name:"AI chatbot on the site responds to a customer query",
+       hint:"Hits the Cyberlab GPU API. Bearer token in a .env, not in source."},
+
+    /* Phase 5 — readiness */
+    {phase:"Phase 5 · Pen-test readiness", id:"backup",  name:"Database backup configured and a restore tested",
+       hint:"Untested backups are not backups."},
+    {phase:"Phase 5 · Pen-test readiness", id:"monitor", name:"Monitoring dashboard up on a visible screen",
+       hint:"Network + device health. Someone watches it."},
+    {phase:"Phase 5 · Pen-test readiness", id:"selfscan",name:"Kali nmap of your own network shows only intended ports",
+       hint:"If you see more, 4620 will too. Close them before Monday."},
+    {phase:"Phase 5 · Pen-test readiness", id:"snapshot",name:"Clean snapshot taken on every VM the morning of pen-test week",
+       hint:"Your panic button if anything gets defaced or destroyed."}
+  ];
+
+  var LS_KEY = "tpc-4910-dogpark";
+  var done = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+  var listEl = document.getElementById("checkList");
+  var fill   = document.getElementById("trackFill");
+  var count  = document.getElementById("trackCount");
+
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(done)); }
+
+  function update(){
+    var total = CHECKLIST.length, n = 0;
+    CHECKLIST.forEach(function(c){ if(done[c.id]) n++; });
+    fill.style.width = (total ? n/total*100 : 0) + "%";
+    count.textContent = n + " / " + total;
+  }
+
+  function render(){
+    listEl.innerHTML = "";
+    var lastPhase = null;
+    CHECKLIST.forEach(function(c){
+      if(c.phase !== lastPhase){
+        var g = document.createElement("div");
+        g.className = "check-group";
+        g.innerHTML = '<h4>'+c.phase+'</h4>';
+        listEl.appendChild(g);
+        lastPhase = c.phase;
+      }
+      var isDone = !!done[c.id];
+      var row = document.createElement("div");
+      row.className = "check-row" + (isDone ? " done" : "");
+      row.innerHTML =
+        '<label>'+
+          '<input type="checkbox" '+(isDone?"checked":"")+' data-id="'+c.id+'">'+
+          '<span>'+
+            '<span class="check-name">'+c.name+'</span>'+
+            '<span class="check-hint">'+c.hint+'</span>'+
+          '</span>'+
+        '</label>';
+      listEl.appendChild(row);
+    });
+    update();
+  }
+
+  listEl.addEventListener("change", function(e){
+    var cb = e.target.closest("input[type=checkbox]"); if(!cb) return;
+    if(cb.checked){ done[cb.dataset.id] = true; } else { delete done[cb.dataset.id]; }
+    save();
+    cb.closest(".check-row").classList.toggle("done", cb.checked);
+    update();
+  });
+
+  document.getElementById("trackReset").addEventListener("click", function(){
+    if(confirm("Clear all self-check progress on this browser?")){ done = {}; save(); render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

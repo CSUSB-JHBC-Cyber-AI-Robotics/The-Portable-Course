@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="The Portable Course — a USB-based cybersecurity curriculum for IST 4620 at Cal State San Bernardino.">
+<meta name="description" content="The Portable Course — a USB-based cybersecurity curriculum for IST 4910 (Enterprise Networking) and IST 4620 (Ethical Hacking) at Cal State San Bernardino.">
 <title>The Portable Course · Cal State San Bernardino</title>
 
 <!-- ============================================================================
@@ -87,6 +87,28 @@ h2.section-h{font-size:1.6rem; margin:8px 0 4px}
 .mod[data-c="1"] .cap{background:linear-gradient(90deg,var(--csusb-blue),var(--csusb-blue-2))}
 .mod[data-c="2"] .cap{background:linear-gradient(90deg,#0e7c8b,#23b6a0)}
 .mod[data-c="4"] .cap{background:linear-gradient(90deg,#c9772a,var(--csusb-gold))}
+.mod[data-c="net"] .cap{background:linear-gradient(90deg,var(--csusb-blue),var(--csusb-gold))}
+
+/* ---- Class section banners ---- */
+.class-banner{display:flex; align-items:center; gap:18px; margin:28px 0 6px;
+  padding:18px 22px; border-radius:14px; box-shadow:var(--shadow);
+  background:linear-gradient(135deg, var(--csusb-blue) 0%, #1c3aa0 100%); color:#fff}
+.class-banner.hack{background:linear-gradient(135deg, #4a1620 0%, #8c1e2b 100%)}
+.class-banner .num{font-family:var(--mono); font-weight:800; font-size:1.4rem; letter-spacing:.02em;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+  padding:6px 14px; border-radius:10px; flex:none}
+.class-banner .name{font-weight:800; font-size:1.15rem; line-height:1.2}
+.class-banner .sub{font-size:.85rem; opacity:.85; margin-top:2px}
+.class-banner b{color:var(--csusb-gold)}
+.class-banner.hack b{color:#ffb47a}
+
+/* ---- Class picker chips at top of modules area ---- */
+.picker{display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 4px}
+.picker a{border:1px solid var(--border); background:var(--surface); color:var(--ink);
+  font-weight:700; font-size:.92rem; padding:9px 16px; border-radius:999px;
+  box-shadow:var(--shadow); display:inline-flex; align-items:center; gap:8px}
+.picker a:hover{text-decoration:none; transform:translateY(-2px)}
+.picker a .pn{font-family:var(--mono); color:var(--muted); font-size:.82rem}
 .mod .body{padding:20px 22px; flex:1; display:flex; flex-direction:column}
 .mod .num{font-family:var(--mono); font-size:.78rem; font-weight:700; color:var(--muted); letter-spacing:.08em}
 .mod h3{margin:.3em 0 .35em; font-size:1.2rem; color:var(--ink)}
@@ -125,7 +147,7 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
 <header class="topbar">
   <div class="wrap">
     <span class="mark">▌The Portable Course</span>
-    <span class="tag">Cal State San Bernardino · IST 4620</span>
+    <span class="tag">Cal State San Bernardino · IST 4910 &amp; 4620</span>
   </div>
 </header>
 
@@ -192,8 +214,9 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
   <div class="hero-content">
     <span class="eyebrow">Cybersecurity &amp; AI · Jack H. Brown College</span>
     <h1>The Portable Course</h1>
-    <p class="lead">Your whole course, in your pocket. Curated, interactive guides that open in any
-      browser — built at the foot of the San Bernardino Mountains.</p>
+    <p class="lead">Two courses, one pocket. Curated, interactive guides for
+      <b>IST 4910 Enterprise Networking</b> and <b>IST 4620 Ethical Hacking</b> —
+      built at the foot of the San Bernardino Mountains.</p>
   </div>
 </div>
 
@@ -218,12 +241,52 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
 
   <!-- ============================================================  MODULES  ============================================================ -->
   <section>
-    <h2 class="section-h">Modules</h2>
+    <h2 class="section-h">Modules by class</h2>
+    <p>Two classes share this drive. Jump to yours:</p>
+    <div class="picker">
+      <a href="#class-4910"><span class="pn">IST</span> 4910 · Enterprise Networking</a>
+      <a href="#class-4620"><span class="pn">IST</span> 4620 · Ethical Hacking</a>
+    </div>
+
+    <!-- ============================================================
+         IST 4910 — Enterprise Networking
+         ============================================================ -->
+    <div id="class-4910" class="class-banner">
+      <span class="num">IST 4910</span>
+      <div>
+        <div class="name">Enterprise Networking</div>
+        <div class="sub">Build, defend, and operate a fictional business on Proxmox. Stay online while <b>4620</b> hunts you.</div>
+      </div>
+    </div>
+    <div class="modules">
+      <a class="mod" data-c="net" href="Dog-Park-Project-Guide.html">
+        <div class="cap"></div>
+        <div class="body">
+          <span class="num">4910 · MODULE 01</span>
+          <h3>Dog Park Project Guide</h3>
+          <p>A Socratic field guide for the eight-VM build: zones, DHCP &amp; routing, firewall rules,
+             AD/DNS join, the storefront, and surviving pen-test week. Saved phased self-check.</p>
+          <span class="go">Open module →</span>
+        </div>
+      </a>
+    </div>
+    <p><small>More 4910 modules are on the way — backups, monitoring, AI integration playbooks.</small></p>
+
+    <!-- ============================================================
+         IST 4620 — Ethical Hacking
+         ============================================================ -->
+    <div id="class-4620" class="class-banner hack">
+      <span class="num">IST 4620</span>
+      <div>
+        <div class="name">Ethical Hacking</div>
+        <div class="sub">The pen-test lifecycle, hands-on CVE practice, and the portable toolkit you'll carry into the field — and into <b>4910</b>'s network on pen-test week.</div>
+      </div>
+    </div>
     <div class="modules">
       <a class="mod" data-c="1" href="Phases-of-Pen-Testing.html">
         <div class="cap"></div>
         <div class="body">
-          <span class="num">MODULE 01</span>
+          <span class="num">4620 · MODULE 01</span>
           <h3>Phases of Penetration Testing</h3>
           <p>The pen-test lifecycle (EC-Council 5 phases, cross-mapped to PTES &amp; NIST), tools &amp;
              techniques per phase, ethics, and an interactive quiz.</p>
@@ -233,7 +296,7 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
       <a class="mod" data-c="2" href="Vulhub-Guide.html">
         <div class="cap"></div>
         <div class="body">
-          <span class="num">MODULE 02</span>
+          <span class="num">4620 · MODULE 02</span>
           <h3>Vulhub Guide</h3>
           <p>What Vulhub is, how to navigate it, an interactive workflow, real-world breach cards, and
              a saved lab-assignment tracker.</p>
@@ -243,7 +306,7 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
       <a class="mod" data-c="4" href="Ultimate-Thumb-Drive-Guide.html">
         <div class="cap"></div>
         <div class="body">
-          <span class="num">MODULE 04</span>
+          <span class="num">4620 · MODULE 03</span>
           <h3>Ultimate Thumb Drive</h3>
           <p>Build a bootable IT/security toolkit (Medicat, YUMI + Kali, PortableApps) with a verified,
              screen-by-screen Medicat walkthrough.</p>
@@ -251,7 +314,7 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
         </div>
       </a>
     </div>
-    <p><small>More modules are on the way — this is a living course.</small></p>
+    <p><small>More 4620 modules are on the way — this is a living course.</small></p>
   </section>
 
   <!-- ============================================================  DOWNLOAD  ============================================================ -->
@@ -264,9 +327,10 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
     </div>
     <p class="dl-sub">Or download just one module:</p>
     <div class="dl-grid">
-      <a class="btn btn-mod" data-c="1" href="Phases-of-Pen-Testing.html" download>⬇ Module 01 · Pen-Testing Phases</a>
-      <a class="btn btn-mod" data-c="2" href="Vulhub-Guide.html" download>⬇ Module 02 · Vulhub Guide</a>
-      <a class="btn btn-mod" data-c="4" href="Ultimate-Thumb-Drive-Guide.html" download>⬇ Module 04 · Ultimate Thumb Drive</a>
+      <a class="btn btn-mod" data-c="1" href="Dog-Park-Project-Guide.html" download>⬇ 4910 · Dog Park Project Guide</a>
+      <a class="btn btn-mod" data-c="1" href="Phases-of-Pen-Testing.html" download>⬇ 4620 · Pen-Testing Phases</a>
+      <a class="btn btn-mod" data-c="2" href="Vulhub-Guide.html" download>⬇ 4620 · Vulhub Guide</a>
+      <a class="btn btn-mod" data-c="4" href="Ultimate-Thumb-Drive-Guide.html" download>⬇ 4620 · Ultimate Thumb Drive</a>
     </div>
     <p><small>Each module is a single self-contained file — downloading it is all you need; it runs
        offline in any browser.</small></p>
@@ -285,7 +349,7 @@ footer .dot{width:6px; height:6px; border-radius:50%; background:var(--csusb-gol
 <footer>
   <div class="wrap">
     <span class="dot"></span>
-    <span><strong>The Portable Course</strong> — IST 4620, Cal State San Bernardino</span>
+    <span><strong>The Portable Course</strong> — IST 4910 &amp; 4620, Cal State San Bernardino</span>
     <span style="margin-left:auto">Educational material · authorized, lab-only use</span>
   </div>
 </footer>
