@@ -442,7 +442,7 @@ vulhub/
 ├── struts2/
 │   └── s2-045/              (CVE-2017-5638 — the Equifax bug)
 ├── weblogic/
-│   └── CVE-2019-2725/
+│   └── CVE-2017-10271/
 └── ...                       hundreds more, grouped by product</pre></div>
 
   <div class="grid cols-2">
@@ -596,7 +596,7 @@ docker system prune       # remove stopped containers + dangling images</pre></d
       <span class="cve">CVE-2014-6271 · GNU Bash</span>
       <p>A decades-old Bash parsing bug let attackers execute commands via web requests, CGI
          scripts and more — devastating because Bash is everywhere on Unix systems.</p>
-      <p class="lab">🐳 Practice it: <code>base/CVE-2014-6271</code></p>
+      <p class="lab">🐳 Practice it: <code>bash/CVE-2014-6271</code></p>
     </div>
   </div>
 
@@ -827,11 +827,11 @@ docker system prune       # remove stopped containers + dangling images</pre></d
   var LABS = [
     {id:"log4shell",   name:"Log4Shell",        path:"log4j/CVE-2021-44228",   cat:"Java / RCE",      diff:3, req:true},
     {id:"struts045",   name:"Struts2 (Equifax)",path:"struts2/s2-045",         cat:"Java / RCE",      diff:2, req:true},
-    {id:"shellshock",  name:"Shellshock",       path:"base/CVE-2014-6271",     cat:"Bash / RCE",      diff:1, req:true},
+    {id:"shellshock",  name:"Shellshock",       path:"bash/CVE-2014-6271",     cat:"Bash / RCE",      diff:1, req:true},
     {id:"drupalgeddon",name:"Drupalgeddon2",    path:"drupal/CVE-2018-7600",   cat:"CMS / RCE",       diff:2, req:true},
     {id:"spring4shell",name:"Spring4Shell",     path:"spring/CVE-2022-22965",  cat:"Java / RCE",      diff:3, req:false},
     {id:"confluence",  name:"Confluence OGNL",  path:"confluence/CVE-2022-26134",cat:"App / RCE",     diff:2, req:false},
-    {id:"weblogic",    name:"WebLogic RCE",     path:"weblogic/CVE-2019-2725", cat:"App / RCE",       diff:3, req:false},
+    {id:"weblogic",    name:"WebLogic RCE",     path:"weblogic/CVE-2017-10271",cat:"App / RCE",       diff:3, req:false},
     {id:"httpd4177",   name:"Apache Path Traversal",path:"httpd/CVE-2021-41773",cat:"Web / LFI-RCE", diff:1, req:false},
     {id:"tomcat",      name:"Tomcat PUT RCE",   path:"tomcat/CVE-2017-12615",  cat:"Web / Upload",    diff:1, req:false},
     {id:"fastjson",    name:"Fastjson deserialization",path:"fastjson/1.2.24-rce",cat:"Java / Deser",diff:3, req:false}

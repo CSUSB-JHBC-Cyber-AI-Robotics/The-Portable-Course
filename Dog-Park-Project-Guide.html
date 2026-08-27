@@ -297,6 +297,7 @@ body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55
       <a href="#business">Business</a>
       <a href="#attack">Pen-test Week</a>
       <a href="#check">Self-check</a>
+      <a href="#sources">Sources</a>
     </nav>
     <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
   </div>
@@ -776,7 +777,7 @@ body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55
     <div class="rung"><div class="n">1</div>
       <div class="what"><b>Stand up the AD/DNS server with a static IP</b><div class="why">Both AD and DNS roles live on the same box. The IP is now the most important number on your network — document it.</div></div></div>
     <div class="rung"><div class="n">2</div>
-      <div class="what"><b>Promote the server to a domain controller and create the domain</b><div class="why">Pick a domain name you will not regret (something.local is common). This name is what every other machine will join.</div></div></div>
+      <div class="what"><b>Promote the server to a domain controller and create the domain</b><div class="why">Pick a domain name you will not regret &mdash; this name is what every other machine will join. You will see <code>something.local</code> in older tutorials, but <a href="https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/selecting-the-forest-root-domain" target="_blank" rel="noopener">Microsoft explicitly recommends against unregistered suffixes such as <code>.local</code></a>, which is reserved for multicast DNS (<a href="https://www.rfc-editor.org/rfc/rfc6762#appendix-G" target="_blank" rel="noopener">RFC 6762</a>) and collides with mDNS resolvers on Linux and macOS clients. The current guidance is a subdomain of a name you control &mdash; <code>ad.yourcompany.com</code>, <code>corp.yourcompany.com</code>. For this lab either will function; use the registered-subdomain form so the habit is right.</div></div></div>
     <div class="rung"><div class="n">3</div>
       <div class="what"><b>Hand out the AD/DNS server's IP as the DNS server in DHCP</b><div class="why">Every client must learn about this box from DHCP, or be configured statically to point at it. <b>Not 8.8.8.8. Not the router. The AD/DNS box.</b></div></div></div>
     <div class="rung"><div class="n">4</div>
@@ -969,6 +970,30 @@ body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:55
     </ol>
     <p style="margin:.6em 0 0">Build the business. Defend it. Ship orders. <b>Good luck.</b></p>
   </div>
+</section>
+
+<!-- ============================================================  SOURCES  ======================================= -->
+<section id="sources">
+  <span class="section-tag">Sources</span>
+  <h2>Where these facts come from</h2>
+  <p>This guide is deliberately Socratic &mdash; it asks more than it tells &mdash; but the technical claims underneath the questions are standards-based, not folklore. When you write your design document, cite the primary sources below rather than a random forum post; they are the authorities your instructor and the pen-test team will hold you to.</p>
+
+  <div class="note think">
+    <b>Verify against your issued lab, always.</b> The addresses, subnets, and topology in this guide are illustrative; your team's instructor-issued plan is the source of truth. These references were confirmed reachable on <b>27 August 2026</b> and explain <em>why</em> the design choices here are correct &mdash; the specific numbers still come from your assignment sheet.
+  </div>
+
+  <table>
+    <thead><tr><th>Topic</th><th>Source</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>Private addressing</td><td><a href="https://www.rfc-editor.org/rfc/rfc1918" target="_blank" rel="noopener noreferrer">RFC 1918</a></td><td>Why <code>10.x</code>, <code>172.16&ndash;31.x</code>, and <code>192.168.x</code> are private and must be NAT'd at the WAN edge</td></tr>
+      <tr><td>DHCP</td><td><a href="https://www.rfc-editor.org/rfc/rfc2131" target="_blank" rel="noopener noreferrer">RFC 2131</a></td><td>What a lease actually hands out (address, mask, gateway, DNS) &mdash; the four-part scope in Part 4</td></tr>
+      <tr><td>APIPA / "DHCP failed"</td><td><a href="https://www.rfc-editor.org/rfc/rfc3927" target="_blank" rel="noopener noreferrer">RFC 3927</a></td><td>Why a <code>169.254.x.x</code> address on a client is an instant "no DHCP" diagnosis</td></tr>
+      <tr><td>AD domain naming</td><td><a href="https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/selecting-the-forest-root-domain" target="_blank" rel="noopener noreferrer">Microsoft Learn &mdash; Selecting the forest root domain</a></td><td>Why to use a registered subdomain rather than an unregistered <code>.local</code> suffix</td></tr>
+      <tr><td><code>.local</code> collision</td><td><a href="https://www.rfc-editor.org/rfc/rfc6762#appendix-G" target="_blank" rel="noopener noreferrer">RFC 6762, Appendix G</a></td><td>Why <code>.local</code> is reserved for multicast DNS and collides with mDNS on Linux/macOS clients</td></tr>
+      <tr><td>RHEL domain join</td><td><a href="https://ubuntu.com/server/docs/service-sssd-ad" target="_blank" rel="noopener noreferrer">SSSD + AD integration</a> &middot; <a href="https://sssd.io/docs/introduction.html" target="_blank" rel="noopener noreferrer">sssd.io docs</a></td><td>What <code>realmd</code>, <code>adcli</code>, and <code>sssd</code> each do in the Linux realm-join stack (Part 6)</td></tr>
+      <tr><td>Default-deny firewalling</td><td><a href="https://csrc.nist.gov/pubs/sp/800/41/r1/final" target="_blank" rel="noopener noreferrer">NIST SP 800-41r1 &mdash; Guidelines on Firewalls</a></td><td>Why a default-deny posture with an explicit allow-list is the defensible design for pen-test week</td></tr>
+    </tbody>
+  </table>
 </section>
 </div>
 
