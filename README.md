@@ -30,6 +30,7 @@ Open [index.html](index.html) to land on the class picker.
 | 01 | [Phases of Penetration Testing](Phases-of-Pen-Testing.html) | The pen-test lifecycle (EC-Council 5 phases, cross-mapped to PTES & NIST SP 800-115), tools & techniques per phase, ethics, and an interactive quiz. |
 | 02 | [Vulhub Guide](Vulhub-Guide.html) | What Vulhub is, how to navigate it, an interactive workflow, real-world breach cards, and a saved lab-assignment tracker. |
 | 03 | [Ultimate Thumb Drive Guide](Ultimate-Thumb-Drive-Guide.html) | Build a bootable IT/security toolkit (Medicat, YUMI + Kali, PortableApps, netboot.xyz, Clonezilla) with a verified, screen-by-screen Medicat walkthrough. |
+| 04 | [Course Activities](Course-Activities.html) | Every hands-on activity in the course, grouped by track rather than by week: setup and access, the Skills Tree ladder, the AI toolbuilding thread, challenges and labs, reading, extra credit and finals. Generated from the Canvas course; licensed courseware is deliberately excluded. Live filter. |
 
 ## Design
 
